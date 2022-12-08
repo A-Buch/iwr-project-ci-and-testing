@@ -1,12 +1,12 @@
 import subprocess
 from pathlib import Path
 
-variable_list = ["tasmin","tasmax"]
+variable_list = ["tas","pr"]
 # out of "GSWP3", "GSWP3+ERA5" etc. see source_base for more datasets.
-dataset = "GSWP3"
-sub = 5
+dataset = "GSWP3-W5E5"
+sub = 40
 
-output_base = Path("/p/tmp/mengel/isimip/isi-cfact/input/")
+output_base = Path("/p/tmp/sitreu/attrici/input/")
 output_dir = output_base / dataset
 
 

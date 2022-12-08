@@ -1,7 +1,8 @@
 import subprocess
 from pathlib import Path
 
-variable_list = ["tas", "tasmax", "tasmin", "pr", "ps", "sfcwind", "rsds", "rlds", "hurs", "huss"]
+# variable_list = ["tas", "tasmax", "tasmin", "pr", "ps", "sfcwind", "rsds", "rlds", "hurs", "huss"]
+variable_list = ["tas", "pr"]
 # out of "GSWP3", "GSWP3+ERA5" etc. see source_base for more datasets.
 dataset = "GSWP3-W5E5"
 
@@ -11,10 +12,10 @@ source_base = Path(
 
 source_dir = source_base #/ dataset
 
-output_base = Path("/p/tmp/mengel/isimip/attrici/input/")
+output_base = Path("/p/tmp/sitreu/attrici/input/")
 
 output_dir = output_base / dataset
-output_dir.mkdir(exist_ok=True)
+output_dir.mkdir(parents=True, exist_ok=True)
 
 
 for variable in variable_list:

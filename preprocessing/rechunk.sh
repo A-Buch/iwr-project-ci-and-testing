@@ -11,8 +11,6 @@
 #SBATCH --account=isimip
 #SBATCH --output=./log/%x.log
 #SBATCH --error=./log/%x.log
-#SBATCH --mail-type=END,FAIL
-#SBATCH --mail-user=mengel@pik-potsdam.de
 
 # block one node to have enough memory
 #SBATCH --ntasks=1
@@ -20,7 +18,7 @@
 
 
 var=$1
-ifile=/p/tmp/mengel/isimip/attrici/input/GSWP3/${var}_gswp3_sub1.nc4
+ifile=/p/tmp/sitreu/attrici/input/GSWP3/${var}_gswp3-w5e5_sub40.nc4
 ofile=/p/tmp/mengel/isimip/attrici/input/GSWP3/rechunked_$(basename ${ifile})
 n_times=$(ncks --trd -m -M $ifile | grep -E -i ": time, size =" | cut -f 7 -d ' ' | uniq)
 ncks -O --cnk_csh=15000000000 --cnk_plc=g3d --cnk_dmn=time,$n_times --cnk_dmn=lat,10 --cnk_dmn=lon,10 $ifile $ofile

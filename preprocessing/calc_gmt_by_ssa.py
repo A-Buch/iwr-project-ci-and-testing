@@ -3,13 +3,15 @@
 # they are complicated to handle with the others. Currently solved through
 # a second virtual environment. Longer-term, we should use standard packages.
 
-import sys
 import subprocess
+import sys
 from datetime import datetime
-import numpy as np
-from pyts.decomposition import SingularSpectrumAnalysis as SSA
-import netCDF4 as nc
 from pathlib import Path
+
+import netCDF4 as nc
+import numpy as np
+
+from pyts.decomposition import SingularSpectrumAnalysis as SSA
 
 # SSA options
 # real window size will be window size* (selection step in col)
@@ -19,7 +21,7 @@ grouping = 1
 subset = 10
 
 dataset = "GSWP3-W5E5"
-output_base = Path("/p/tmp/mengel/isimip/attrici/input/")
+output_base = Path("/p/tmp/sitreu/attrici/input/")
 output_dir = output_base / dataset
 
 input_file = output_dir / Path("tas_" + dataset.lower() + "_merged.nc4")
