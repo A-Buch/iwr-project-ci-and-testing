@@ -21,6 +21,7 @@ cdo_processing = False
 
 TIME0 = datetime.now()
 
+print(s.variable)
 ts_dir = s.output_dir / "timeseries" / s.variable
 cfact_dir = s.output_dir / "cfact" / s.variable
 
@@ -55,8 +56,11 @@ variables_to_report = {s.variable: "cfact", s.variable + "_orig": "y"}
 
 #  get headers and form empty netCDF file with all meatdata
 headers = pp.read_from_disk(data_list[0]).keys()
+print("headers")
 print(data_list[0])
-headers = headers.drop(["t", "ds", "gmt", "gmt_scaled"])
+print(headers)
+#headers = headers.drop(["t", "ds", "gmt", "gmt_scaled"])  # org
+#headers = headers.drop(['ds', 'y', 'cfact', 'logp']) # modif
 
 out = nc.Dataset(cfact_file, "w", format="NETCDF4")
 pp.form_global_nc(out, time, lat, lon, headers, obs.variables["time"].units)
@@ -90,6 +94,7 @@ if cdo_processing:
     for cdo_op in cdo_ops:
 
         outfile = str(cfact_file).rstrip(".nc4") + "_" + cdo_op + ".nc4"
+        print(outfile)
         if "trend" in cdo_op:
             outfile = (
                 outfile.rstrip(".nc4") + "_1.nc4 " + outfile.rstrip(".nc4") + "_2.nc4"

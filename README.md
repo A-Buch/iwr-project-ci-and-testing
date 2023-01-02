@@ -11,68 +11,76 @@ Code implementing the methods described in the paper `ATTRICI 1.1 - counterfactu
 * The choice of the probability model for a variable is specified in [estimator.py](attrici/estimator.py)
 
 
-## Install
+## Installion under WSL2
 
-Please do
+Please do:
+Replace ```<env_name>``` by self-defined environment name
 
-`conda config --add channels conda-forge`
+Navigate to the ```test_input``` folder if you haven't done yet:
 
-`conda create -n attrici pymc3==3.7 python==3.7`
+Create conda environment with python=3.7 and all packages mentioned in environment.yml
+`conda create --name <env_name> --file ./path_to/environment.yml`
 
-`conda activate attrici`
+Activate conda environment
+`conda activate <env_name>`
 
-`conda install netCDF4 pytables matplotlib arviz`
-
+Install package which is not mentioned in environment.yml
 `pip install func_timeout`
 
-You may optionally
+You may optionally 
 `cp config/theanorc ~/.theanorc`
 
-
-## Usage
-
-The parallelization part to run large datasets is currently taylored to the supercomputer at the Potsdam Institute for Climate Impact Research using the [slurm scheduler](https://slurm.schedmd.com/documentation.html). Generalizing it into a package is ongoing work. We use the GNU compiler as the many parallel compile jobs through jobarrays and JIT compilation conflict with the few Intel licenses.
-
-`module purge`
-
+Load compiler
 `module load compiler/gnu/7.3.0`
 
-`conda activate yourenv`
-
-In the root package directory.
-
+In the root package directory
 `pip install -e .`
 
 
+## USAGE
+
+The parallelization part to run large datasets is currently taylored to the supercomputer at the Potsdam Institute for Climate Impact Research using the [slurm scheduler](https://slurm.schedmd.com/documentation.html). Generalizing it into a package is ongoing work. We use the GNU compiler as the many parallel compile jobs through jobarrays and JIT compilation conflict with the few Intel licenses.
+
+Adapt filepath and variables in ```settings.py```
+
+Run following python scripts to create counterfactual data:
+`python run_estimation.py`
+`python merge_cfact.py`
+
 Override the conda setting with: `export CXX=g++`
 
-Load input data from [https://data.isimip.org](https://data.isimip.org)
 
+## Input data
+
+Option 1:
+
+Use the provided sample dataset, which is already preprocessed, located in ```./test-input/GSWP3-W5E5/``` 
+In this folder dataset for the variables precipiation (pr) and air temperature (tas) are provided, as also a land-sea mask.
+Skip the section about Preprocessing and apply ```run_estimation.py``` and ```merge_cfact.py``` directly to generate counterfactual data 
+
+
+Option 2:
+
+Alternatively load input data from [https://data.isimip.org](https://data.isimip.org)
 The input for one variable is a single netcdf file containing all time steps. 
-
 Create smoothed gmt time series as predictor using `preprocessing/calc_gmt_by_ssa.py` with adjusted file-paths.
-
 Get auxiliary *tasskew* and *tasrange* time series using `preprocessing/create_tasrange_tasskew.py` with adjusted file-paths.
 
 Adjust `settings.py`
 
 For estimating parameter distributions (above step 1) and smaller datasets
-
 `python run_estimation.py`
 
 For larger datasets, produce a `submit.sh` file via
-
 `python create_submit.py`
 
 Then submit to the slurm scheduler
-
 `sbatch submit.sh`
 
 For merging the single timeseries files to netcdf datasets
-
 `python merge_cfact.py`
 
-### Handle several runs with different settings
+## Handle several runs with different settings
 
 Copy the `settings.py`, `run_estimation.py`, `merge_cfact.py` and `submit.sh` to a separate directory,
 for example `myrunscripts`. Adjust `settings.py` and `submit.sh`, in particular the output directoy, and continue as in Usage.

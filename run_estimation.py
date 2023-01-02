@@ -12,6 +12,7 @@ import settings as s
 from pymc3.parallel_sampling import ParallelSamplingError
 import logging
 
+
 s.output_dir.mkdir(parents=True,exist_ok=True)
 logging.basicConfig(
     filename=s.output_dir / "failing_cells.log",
@@ -55,8 +56,9 @@ lons = obs_data.variables["lon"][:]
 longrid, latgrid = np.meshgrid(lons, lats)
 jgrid, igrid = np.meshgrid(np.arange(len(lons)), np.arange(len(lats)))
 
-ls_mask = nc_lsmask.variables["LSM"][0, :]
+ls_mask = nc_lsmask.variables["mask"][:, :] # modified to 2D-array
 df_specs = pd.DataFrame()
+
 df_specs["lat"] = latgrid[ls_mask == 1]
 df_specs["lon"] = longrid[ls_mask == 1]
 df_specs["index_lat"] = igrid[ls_mask == 1]

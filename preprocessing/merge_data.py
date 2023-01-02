@@ -12,7 +12,8 @@ source_base = Path(
 
 source_dir = source_base #/ dataset
 
-output_base = Path("/p/tmp/sitreu/attrici/input/")
+output_base = Path("/mnt/c/Users/Anna/Documents/UNI/PIK/test_input/test_input")
+#output_base = Path("/p/tmp/sitreu/attrici/input/")
 
 output_dir = output_base / dataset
 output_dir.mkdir(parents=True, exist_ok=True)

@@ -72,7 +72,9 @@ class estimator(object):
                     trace = pickle.load(handle)
             except Exception as e:
                 print("Problem with saved trace:", e, ". Redo parameter estimation.")
-                trace = pm.find_MAP(model=self.model)
+                print("find_MAP")
+                trace = pm.find_MAP(model=self.model)  # causes crash
+                #trace = pm.sample(model=self.model) 
                 if self.save_trace:
                     with open(outdir_for_cell, 'wb') as handle:
                         free_params = {key: value for key, value in trace.items()
@@ -105,7 +107,7 @@ class estimator(object):
 
         return trace, dff
 
-    def sample(self):
+    def sample(self):   
 
         TIME0 = datetime.now()
 
