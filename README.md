@@ -14,12 +14,12 @@ Code implementing the methods described in the paper `ATTRICI 1.1 - counterfactu
 ## Installion under WSL2
 
 Please do:
-Replace ```<env_name>``` by self-defined environment name
+Replace ```<env_name>``` by self-defined environment name and ```<path_to>``` by the file path to the environment file located in the ```config``` folder
 
 Navigate to the ```test_input``` folder if you haven't done yet:
 
 Create conda environment with python=3.7 and all packages mentioned in environment.yml
-`conda create --name <env_name> --file ./path_to/environment.yml`
+`conda create --name <env_name> --file ./<path_to>/config/environment.yml`
 
 Activate conda environment
 `conda activate <env_name>`
@@ -33,40 +33,34 @@ You may optionally
 Load compiler
 `module load compiler/gnu/7.3.0`
 
-In the root package directory
+In the root package directory 
 `pip install -e .`
+
+Override the conda setting with 
+`export CXX=g++`
 
 
 ## USAGE
 
 The parallelization part to run large datasets is currently taylored to the supercomputer at the Potsdam Institute for Climate Impact Research using the [slurm scheduler](https://slurm.schedmd.com/documentation.html). Generalizing it into a package is ongoing work. We use the GNU compiler as the many parallel compile jobs through jobarrays and JIT compilation conflict with the few Intel licenses.
 
-Adapt filepath and variables in ```settings.py```
-
-Run following python scripts to create counterfactual data:
-`python run_estimation.py`
-`python merge_cfact.py`
-
-Override the conda setting with: `export CXX=g++`
+Adjust `settings.py`
 
 
-## Input data
+**Option 1 for input data (sample):**
 
-Option 1:
+Use the provided sample dataset, which is already preprocessed, located in `./test-input/GSWP3-W5E5/`. In this subfolder the datasets for the variables precipiation (pr) and air temperature (tas) are provided, as also a land-sea mask.
+Skip the section about Preprocessing and run following python scripts directly to generate counterfactual data:
+```python run_estimation.py```
+```python merge_cfact.py```
 
-Use the provided sample dataset, which is already preprocessed, located in ```./test-input/GSWP3-W5E5/``` 
-In this folder dataset for the variables precipiation (pr) and air temperature (tas) are provided, as also a land-sea mask.
-Skip the section about Preprocessing and apply ```run_estimation.py``` and ```merge_cfact.py``` directly to generate counterfactual data 
 
+**Option 2 for input data (user-defined):**
 
-Option 2:
-
-Alternatively load input data from [https://data.isimip.org](https://data.isimip.org)
+Alternatively load input data from [https://data.isimip.org](https://data.isimip.org)]
 The input for one variable is a single netcdf file containing all time steps. 
 Create smoothed gmt time series as predictor using `preprocessing/calc_gmt_by_ssa.py` with adjusted file-paths.
 Get auxiliary *tasskew* and *tasrange* time series using `preprocessing/create_tasrange_tasskew.py` with adjusted file-paths.
-
-Adjust `settings.py`
 
 For estimating parameter distributions (above step 1) and smaller datasets
 `python run_estimation.py`
@@ -80,10 +74,12 @@ Then submit to the slurm scheduler
 For merging the single timeseries files to netcdf datasets
 `python merge_cfact.py`
 
+
 ## Handle several runs with different settings
 
 Copy the `settings.py`, `run_estimation.py`, `merge_cfact.py` and `submit.sh` to a separate directory,
 for example `myrunscripts`. Adjust `settings.py` and `submit.sh`, in particular the output directoy, and continue as in Usage.
+
 
 ## Preprocessing
 
@@ -114,6 +110,7 @@ Land-sea file creation
 We use the ISIMIP2b land-sea mask to select only land cells for processing.
 Smaller datasets through subsetting were created using CDO.
 
+
 ## Postprocessing
 
 For tasmin and tasmax, we do not estimate counterfactual time series individually to avoid large relative errors in the daily temperature range as pointed out by (Piani et al. 2010). Following (Piani et al. 2010), we estimate counterfactuals of the daily temperature range tasrange = tasmax - tasmin and the skewness of the daily temperature tasskew = (tas - tasmin) / tasrange. Use [create_tasmin_tasmax.py](postprocessing/create_tasmin_tasmax.py)
@@ -121,6 +118,11 @@ with adjusted paths for the _tas_, _tasrange_ and _tasskew_ counterfactuals.
 
 A counterfactual huss is derived from the counterfacual tas, ps and hurs using the equations of Buck (1981) as described in Weedon et al. (2010). Use [derive_huss.sh](postprocessing/derive_huss.sh)
 with adjusted file names and the required time range.
+
+
+## Example
+
+See [here](examples/tas_example.ipynb) for a notebook visualizing the generated counterfactual data.
 
 
 ## Credits
