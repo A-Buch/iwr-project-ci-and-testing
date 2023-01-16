@@ -12,6 +12,8 @@ import settings as s
 from pymc3.parallel_sampling import ParallelSamplingError
 import logging
 
+import time
+
 
 s.output_dir.mkdir(parents=True,exist_ok=True)
 logging.basicConfig(
@@ -94,8 +96,11 @@ estimator = est.estimator(s)
 
 TIME0 = datetime.now()
 
-for n in run_numbers[:]:
+#for n in run_numbers[:]:
+for n in run_numbers[:2]:
     sp = df_specs.loc[n, :]
+
+    #start = time.process_time()
 
     # if lat >20: continue
     print(
@@ -105,6 +110,9 @@ for n in run_numbers[:]:
         s.output_dir, "timeseries", sp["lat"], sp["lon"], s.variable
     )
     fname_cell = dh.get_cell_filename(outdir_for_cell, sp["lat"], sp["lon"], s)
+
+    #print(time.process_time() - start, "1")
+    #start = time.process_time()
 
     if s.skip_if_data_exists:
         try:
@@ -117,6 +125,9 @@ for n in run_numbers[:]:
 
     data = obs_data.variables[s.variable][:, sp["index_lat"], sp["index_lon"]]
     df, datamin, scale = dh.create_dataframe(nct[:], nct.units, data, gmt, s.variable)
+
+    #print(time.process_time() - start, "2")
+    #start = time.process_time()
 
     try:
         trace, dff = func_timeout(
@@ -140,8 +151,11 @@ for n in run_numbers[:]:
             )
         continue
 
+    #print(time.process_time() - start, "3")
+
     df_with_cfact = estimator.estimate_timeseries(dff, trace, datamin, scale, s.map_estimate)
     dh.save_to_disk(df_with_cfact, fname_cell, sp["lat"], sp["lon"], s.storage_format)
+    
 
 obs_data.close()
 nc_lsmask.close()
@@ -150,3 +164,7 @@ print(
         (datetime.now() - TIME0).total_seconds() / 60
     )
 )
+
+
+## Profileing by line
+## pprofile --statistic .01 run_estimation.py
