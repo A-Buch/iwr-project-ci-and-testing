@@ -5,7 +5,7 @@
 import glob
 import itertools as it
 from pathlib import Path
-
+import math
 import netCDF4 as nc
 import numpy as np
 import pandas as pd
@@ -26,6 +26,7 @@ ts_dir = s.output_dir / "timeseries" / s.variable
 cfact_dir = s.output_dir / "cfact" / s.variable
 
 data_gen = ts_dir.glob("**/*" + s.storage_format)
+print(ts_dir, "ts_dir")
 cfact_dir.mkdir(parents=True, exist_ok=True)
 cfact_file = cfact_dir / s.cfact_file
 
@@ -37,8 +38,24 @@ for i in data_gen:
     data_list.append(str(i))
     lat_float = float(str(i).split("lat")[-1].split("_")[0])
     lon_float = float(str(i).split("lon")[-1].split(s.storage_format)[0])
-    lat_indices.append(int(180 - 2 * lat_float - 0.5))
-    lon_indices.append(int(2 * lon_float - 0.5 + 360))
+    
+    ## rescale to shape of AOI
+    min_lat = math.ceil(min(lat)*100) / 100 
+    min_lon = math.ceil(min(lon)*100) / 100 
+    max_lat = math.ceil(max(lat)*100) / 100 
+    max_lon = math.ceil(max(lon)*100) / 100 
+
+    lat_indices.append(
+        int(
+            (lat.shape[0] - 0) / ( max_lat - min_lat) * (lat_float - min_lat) + 0
+            )
+        ) 
+    lon_indices.append(
+        int(
+            (lon.shape[0] - 0) / ( max_lon - min_lon) * (lon_float - min_lon) + 0
+            )
+        )
+
 
 # adjust indices if datasets are subsets (lat/lon-shapes are smaller than 360/720)
 # TODO: make this more robust
@@ -46,6 +63,7 @@ lat_indices = np.array(lat_indices) / s.lateral_sub
 lon_indices = np.array(lon_indices) / s.lateral_sub
 
 ### access data from source file
+#obs = nc.Dataset(Path(s.input_dir) / s.source_file.lower(), "r")
 obs = nc.Dataset(Path(s.input_dir) / s.dataset / s.source_file.lower(), "r")
 time = obs.variables["time"][:]
 lat = obs.variables["lat"][:]
@@ -56,11 +74,9 @@ variables_to_report = {s.variable: "cfact", s.variable + "_orig": "y"}
 
 #  get headers and form empty netCDF file with all meatdata
 headers = pp.read_from_disk(data_list[0]).keys()
-print("headers")
-print(data_list[0])
 print(headers)
 #headers = headers.drop(["t", "ds", "gmt", "gmt_scaled"])  # org
-#headers = headers.drop(['ds', 'y', 'cfact', 'logp']) # modif
+#headers = headers.drop(["ds"])
 
 out = nc.Dataset(cfact_file, "w", format="NETCDF4")
 pp.form_global_nc(out, time, lat, lon, headers, obs.variables["time"].units)
@@ -77,6 +93,7 @@ for (i, j, dfpath) in it.zip_longest(lat_indices, lon_indices, data_list):
 out.close()
 print("Successfully wrote", cfact_file, "file. Took")
 print("It took {0:.1f} minutes.".format((datetime.now() - TIME0).total_seconds() / 60))
+
 
 if rechunk:
     cfact_rechunked = pp.rechunk_netcdf(cfact_file)
