@@ -21,12 +21,11 @@ cdo_processing = False
 
 TIME0 = datetime.now()
 
-print(s.variable)
+print(s.variable, s.lateral_sub, "s.lateral_sub")
 ts_dir = s.output_dir / "timeseries" / s.variable
 cfact_dir = s.output_dir / "cfact" / s.variable
 
 data_gen = ts_dir.glob("**/*" + s.storage_format)
-print(ts_dir, "ts_dir")
 cfact_dir.mkdir(parents=True, exist_ok=True)
 cfact_file = cfact_dir / s.cfact_file
 
@@ -43,6 +42,7 @@ data_list = []
 lat_indices = []
 lon_indices = []
 for i in data_gen:
+    print(i)
     data_list.append(str(i))
     lat_float = float(str(i).split("lat")[-1].split("_")[0])
     lon_float = float(str(i).split("lon")[-1].split(s.storage_format)[0])
@@ -58,12 +58,12 @@ for i in data_gen:
 
         lat_indices.append(
             int(
-                (lat.shape[0] - 0) / ( max_lat - min_lat) * (lat_float - min_lat) + 40
+                (lat.shape[0] - 0) / ( max_lat - min_lat) * (lat_float - min_lat) + 0
                 )
             ) 
         lon_indices.append(
             int(
-                (lon.shape[0] - 0) / ( max_lon - min_lon) * (lon_float - min_lon) + 40
+                (lon.shape[0] - 0) / ( max_lon - min_lon) * (lon_float - min_lon) + 0
                 )
             )
 
@@ -100,8 +100,8 @@ for (i, j, dfpath) in it.zip_longest(lat_indices, lon_indices, data_list):
         ts = df[head]
         out.variables[head][:, i, j] = np.array(ts)
     print("wrote data from", dfpath, "to", i, j)
-
 out.close()
+
 print("Successfully wrote", cfact_file, "file. Took")
 print("It took {0:.1f} minutes.".format((datetime.now() - TIME0).total_seconds() / 60))
 
