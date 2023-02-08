@@ -5,7 +5,6 @@
 import glob
 import itertools as it
 from pathlib import Path
-import math
 import netCDF4 as nc
 import numpy as np
 import pandas as pd
@@ -21,7 +20,6 @@ cdo_processing = False
 
 TIME0 = datetime.now()
 
-print(s.variable, s.lateral_sub, "s.lateral_sub")
 ts_dir = s.output_dir / "timeseries" / s.variable
 cfact_dir = s.output_dir / "cfact" / s.variable
 
@@ -42,32 +40,17 @@ data_list = []
 lat_indices = []
 lon_indices = []
 for i in data_gen:
-    print(i)
     data_list.append(str(i))
     lat_float = float(str(i).split("lat")[-1].split("_")[0])
     lon_float = float(str(i).split("lon")[-1].split(s.storage_format)[0])
     
-    ## squared extent of AOI (rescaling needed)   
-    ## TODO: make this more robust, so that also a squared AOI with nth pixel cells (e.g. s.lateral_sub = 40) is usable
-    ## Fomrular: (new_max - new_min) / (old_max - old_min) * (v - old_min) + new_min
+    ## regional AOI (rescaling needed)   
+    ## TODO: make this more robust, so that also a regional AOI with nth pixel cells (e.g. s.lateral_sub = 40) is usable
     if s.lateral_sub == 1 :
-        min_lat = math.ceil(min(lat)*100) / 100 
-        min_lon = math.ceil(min(lon)*100) / 100 
-        max_lat = math.ceil(max(lat)*100) / 100 
-        max_lon = math.ceil(max(lon)*100) / 100 
+        lat_indices.append( pp.rescale_squared_aoi(lat, lat_float ))
+        lon_indices.append( pp.rescale_squared_aoi(lon, lon_float ))
 
-        lat_indices.append(
-            int(
-                (lat.shape[0] - 0) / ( max_lat - min_lat) * (lat_float - min_lat) + 0
-                )
-            ) 
-        lon_indices.append(
-            int(
-                (lon.shape[0] - 0) / ( max_lon - min_lon) * (lon_float - min_lon) + 0
-                )
-            )
-
-    ## rectangular extent of AOI (no rescaling needed)
+    ## global AOI, optional with sparse values on every nth pixel cell (no rescaling needed)
     else:  
         lat_indices.append(int(180 - 2 * lat_float - 0.5))
         lon_indices.append(int(2 * lon_float - 0.5 + 360))
@@ -94,7 +77,6 @@ pp.form_global_nc(out, time, lat, lon, headers, obs.variables["time"].units)
 
 
 for (i, j, dfpath) in it.zip_longest(lat_indices, lon_indices, data_list):
-
     df = pp.read_from_disk(dfpath)
     for head in headers:
         ts = df[head]
