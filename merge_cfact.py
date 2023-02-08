@@ -56,6 +56,9 @@ for i in data_gen:
         lon_indices.append(int(2 * lon_float - 0.5 + 360))
 
 
+if s.lateral_sub == 1 :
+    lat_indices = lat_indices[: : -1]  # reverse indieces to undone flip of spatial extent
+
 
 # adjust indices if datasets are subsets (lat/lon-shapes are smaller than 360/720)
 # TODO: make this more robust
