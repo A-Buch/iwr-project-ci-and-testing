@@ -131,7 +131,7 @@ See [here](examples/tas_example.ipynb) for a notebook visualizing the generated 
 ## Example for SLURM job script:
 *Explantation of commands used on PIKs HPC cluster*
 
-'''
+"""
 #!/bin/bash
 
 #SBATCH --qos=standby   ## takes currently unused nodes
@@ -186,7 +186,7 @@ cleanup
 
 echo "Finished run."
 
-'''
+"""
 
 
 
