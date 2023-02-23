@@ -12,9 +12,6 @@ import settings as s
 from pymc3.parallel_sampling import ParallelSamplingError
 import logging
 
-import time
-
-
 s.output_dir.mkdir(parents=True,exist_ok=True)
 logging.basicConfig(
     filename=s.output_dir / "failing_cells.log",
@@ -47,7 +44,7 @@ ncg = nc.Dataset(gmt_file, "r")
 gmt = np.squeeze(ncg.variables["tas"][:])
 ncg.close()
 
-input_file = s.input_dir / s.dataset / s.source_file.lower()
+input_file = s.input_dir / s.source_file.lower()
 landsea_mask_file = s.input_dir / s.landsea_file
 
 obs_data = nc.Dataset(input_file, "r")
@@ -58,9 +55,8 @@ lons = obs_data.variables["lon"][:]
 longrid, latgrid = np.meshgrid(lons, lats)
 jgrid, igrid = np.meshgrid(np.arange(len(lons)), np.arange(len(lats)))
 
-ls_mask = nc_lsmask.variables["mask"][:, :] # modified to 2D-array
+ls_mask = nc_lsmask.variables["area_European_01min"][:, :]
 df_specs = pd.DataFrame()
-
 df_specs["lat"] = latgrid[ls_mask == 1]
 df_specs["lon"] = longrid[ls_mask == 1]
 df_specs["index_lat"] = igrid[ls_mask == 1]
@@ -96,11 +92,8 @@ estimator = est.estimator(s)
 
 TIME0 = datetime.now()
 
-#for n in run_numbers[:]:
-for n in run_numbers[:2]:
+for n in run_numbers[:]:
     sp = df_specs.loc[n, :]
-
-    #start = time.process_time()
 
     # if lat >20: continue
     print(
@@ -110,9 +103,6 @@ for n in run_numbers[:2]:
         s.output_dir, "timeseries", sp["lat"], sp["lon"], s.variable
     )
     fname_cell = dh.get_cell_filename(outdir_for_cell, sp["lat"], sp["lon"], s)
-
-    #print(time.process_time() - start, "1")
-    #start = time.process_time()
 
     if s.skip_if_data_exists:
         try:
@@ -126,12 +116,10 @@ for n in run_numbers[:2]:
     data = obs_data.variables[s.variable][:, sp["index_lat"], sp["index_lon"]]
     df, datamin, scale = dh.create_dataframe(nct[:], nct.units, data, gmt, s.variable)
 
-    #print(time.process_time() - start, "2")
-    #start = time.process_time()
-
     try:
         trace, dff = func_timeout(
-            s.timeout, estimator.estimate_parameters, args=(df, sp["lat"], sp["lon"], s.map_estimate)
+            #s.timeout, estimator.estimate_parameters, args=(df, sp["lat"], sp["lon"], s.map_estimate)
+            s.timeout, estimator.estimate_parameters, args=(df, sp["lat"], sp["lon"], sp["index_lat"], sp["index_lon"], s.map_estimate)
         )
     except (FunctionTimedOut, ParallelSamplingError, ValueError) as error:
         if str(error) == "Modes larger 1 are not allowed for the censored model.":
@@ -151,11 +139,8 @@ for n in run_numbers[:2]:
             )
         continue
 
-    #print(time.process_time() - start, "3")
-
-    df_with_cfact = estimator.estimate_timeseries(dff, trace, datamin, scale, s.map_estimate)
-    dh.save_to_disk(df_with_cfact, fname_cell, sp["lat"], sp["lon"], s.storage_format)
-    
+   # df_with_cfact = estimator.estimate_timeseries(dff, trace, datamin, scale, s.map_estimate)
+   # dh.save_to_disk(df_with_cfact, fname_cell, sp["lat"], sp["lon"], s.storage_format)
 
 obs_data.close()
 nc_lsmask.close()
@@ -164,7 +149,3 @@ print(
         (datetime.now() - TIME0).total_seconds() / 60
     )
 )
-
-
-## Profileing by line
-## pprofile --statistic .01 run_estimation.py

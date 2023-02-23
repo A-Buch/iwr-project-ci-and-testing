@@ -3,11 +3,16 @@ import numpy as np
 import pandas as pd
 import pymc3 as pm
 from datetime import datetime
+import netCDF4 as nc
+from pathlib import Path
 
 import attrici.datahandler as dh
 import attrici.const as c
 import attrici.models as models
 import attrici.fourier as fourier
+import attrici.postprocess as pp
+import settings as s
+
 import pickle
 
 model_for_var = {
@@ -53,7 +58,7 @@ class estimator(object):
             )
             raise error
 
-    def estimate_parameters(self, df, lat, lon, map_estimate):
+    def estimate_parameters(self, df, lat, lon, lat_idx, lon_idx, map_estimate):
         x_fourier = fourier.get_fourier_valid(df, self.modes)
         x_fourier_01 = (x_fourier + 1) / 2
         x_fourier_01.columns = ["pos" + col for col in x_fourier_01.columns]
@@ -66,48 +71,61 @@ class estimator(object):
         outdir_for_cell = dh.make_cell_output_dir(
             self.output_dir, "traces", lat, lon, self.variable
         )
+
+        ## modified: store parameter called traces as separte netcdf variables
         if map_estimate:
-            try:
-                with open(outdir_for_cell, 'rb') as handle:
-                    trace = pickle.load(handle)
-            except Exception as e:
-                print("Problem with saved trace:", e, ". Redo parameter estimation.")
-                print("find_MAP")
-                trace = pm.find_MAP(model=self.model)  # causes crash
-                #trace = pm.sample(model=self.model) 
-                if self.save_trace:
-                    with open(outdir_for_cell, 'wb') as handle:
-                        free_params = {key: value for key, value in trace.items()
-                                       if key.startswith('weights') or key=='logp'}
-                        pickle.dump(free_params, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        else:
+                trace = pm.find_MAP(model=self.model)
+                params_names = list(trace.keys())
+                print("params_names", params_names, "params items", trace.items())
+                
+                ## define shape of new trace file 
+                trace_filepath = s.output_dir / s.trace_file
+                obs = nc.Dataset(Path(s.input_dir) / s.source_file.lower(), "r")
+                time = obs.variables["time"][:]
+                lat_list = obs.variables["lat"][:]
+                lon_list = obs.variables["lon"][:]
+                if (os.path.exists(trace_filepath) == False):
+                    out = nc.Dataset(trace_filepath, "w", format="NETCDF4") # create empty file if not exists
+                    pp.form_global_nc(out, time, lat_list, lon_list, params_names, obs.variables["time"].units)
+                    out.close()
+                out = nc.Dataset(trace_filepath, "a", format="NETCDF4") # write to existing file
+ 
+                ## write the values of each parameter as single layers to nc file, i.e. one parameter can contain 1 to n layers
+                for param_name in params_names:
+                    values_per_parameter = np.atleast_1d(np.array(trace[param_name])) # amount of values for certain parameter by forcing 0-D arrays to 1-D
+                    print("writing", len(values_per_parameter), "values of parameter", param_name)
+                    for n in range(len(values_per_parameter)):
+                        out.variables[param_name][ n, int(lat_idx), int(lon_idx)] = np.array(values_per_parameter[n])
+                print(f"wrote all {len(params_names)} parameters to {lat}, {lon}")
+                out.close()
+      #  else:
             # FIXME: Rework loading old traces
             # print("Search for trace in\n", outdir_for_cell)
             # As load_trace does not throw an error when no saved data exists, we here
             # test this manually. FIXME: Could be improved, as we check for existence
             # of names and number of chains only, but not that the data is not corrupted.
-            try:
-                trace = pm.load_trace(outdir_for_cell, model=self.model)
-                print(trace.varnames)
+       #     try:
+       #         trace = pm.load_trace(outdir_for_cell, model=self.model)
+       #         print(trace.varnames)
                 #     for var in self.statmodel.vars_to_estimate:
                 #         if var not in trace.varnames:
                 #             print(var, "is not in trace, rerun sampling.")
                 #             raise IndexError
                 #     if trace.nchains != self.chains:
                 #         raise IndexError("Sample data not completely saved. Rerun.")
-                print("Successfully loaded sampled data from")
-                print(outdir_for_cell)
-                print("Skip this for sampling.")
-            except Exception as e:
-                print("Problem with saved trace:", e, ". Redo parameter estimation.")
-                trace = self.sample()
+       #         print("Successfully loaded sampled data from")
+       #         print(outdir_for_cell)
+       #         print("Skip this for sampling.")
+       #     except Exception as e:
+       #         print("Problem with saved trace:", e, ". Redo parameter estimation.")
+       #         trace = self.sample()
                 # print(pm.summary(trace))  # takes too much memory
-                if self.save_trace:
-                    pm.backends.save_trace(trace, outdir_for_cell, overwrite=True)
+       #         if self.save_trace:
+       #             pm.backends.save_trace(trace, outdir_for_cell, overwrite=True)
 
         return trace, dff
 
-    def sample(self):   
+    def sample(self):
 
         TIME0 = datetime.now()
 
