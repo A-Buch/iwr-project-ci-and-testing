@@ -132,11 +132,11 @@ See [here](examples/tas_example.ipynb) for a notebook visualizing the generated 
 *Explantation of commands used on PIKs HPC cluster*
 
 """
+<!---
 #!/bin/bash
 
 #SBATCH --qos=standby   ## takes currently unused nodes
 #SBATCH --partition=priority
-
 #SBATCH --job-name=attrici_tas_corr
 #SBATCH --account=dmcci
 #SBATCH --output=/p/tmp/<username>/log/%x_%a.log
@@ -149,6 +149,7 @@ See [here](examples/tas_example.ipynb) for a notebook visualizing the generated 
 #SBATCH --time=01:00:00
 
 # rm -rf /tmp/*  # optional: empty tmp folder
+-->
 
 module purge
 module load compiler/gnu/7.3.0
@@ -157,7 +158,9 @@ module load anaconda/5.0.0_py3
 
 export CXX=g++
 
+<!---
 # set tmp_dir and comiledir which are needed for theano package
+-->
 tmpdir=/p/tmp/<username>/theano/theano_${SLURM_ARRAY_TASK_ID}.tmp
 mkdir -p $tmpdir
 export TMPDIR=$tmpdir
@@ -166,18 +169,24 @@ compiledir=/p/tmp/<username>/theano/$SLURM_ARRAY_TASK_ID
 mkdir -p $compiledir
 export THEANO_FLAGS=base_compiledir=$compiledir
 
+<!---
 # define garbage collector for cleaning up after python script execution as also in case jobs are aborted
+-->
 cleanup() {
   rm -r $compiledir
   rm -r $tmpdir
   exit
 }
 
+<!---
 # copy theanorc to current working directory. It includes settings on which pymc3 is based.
 # Note: Within theanorc "floatX = float64" should be set.
+-->
 cp /home/<username>/theanorc ./theanorc
 
+<!---
 # activate conda env and generate counterfactual climate data
+-->
 source activate <env_name>
 python -u ./scripts/run_estimation.py
 python -u ./scripts/merge_cfact.py &
