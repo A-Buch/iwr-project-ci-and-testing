@@ -4,128 +4,23 @@
 Code implementing the methods described in the paper `ATTRICI 1.1 - counterfactual climate for impact attribution` in Geoscientific Model Development. The code is archived at [ZENODO](https://doi.org/10.5281/zenodo.3828914).
 
 
-## Project Structure
-* All general settings are defined in [settings.py](settings.py).
-* The code can be run with [run_estimation.py](run_estimation.py) or [run_single_cell.py](run_single_cell.py).
-* The probability model for different climate variables is specified in [models.py](attrici/models.py)
-* The choice of the probability model for a variable is specified in [estimator.py](attrici/estimator.py)
+*Note*: Example input file (already merged) located in PIK cloud within a shared folder called *ERA5_example_input*
 
 
-## Installion under WSL2
+### Write out parameters to file 
+Run files located in scripts_writeParameters with submit.sh, i.e. with example input data
+Uncomment within submit.sh:
+`python -u ./scripts/run_estimation.py &`
 
-Please do:
-Replace ```<env_name>``` by self-defined environment name and ```<path_to>``` by the file path to the environment file located in the ```config``` folder
+#### Interpolate parameters
+Run interpolation script with submit.sh. Uncomment within submit.sh:
+`python -u ./scripts/mask_interpolated_parameterfile.py &`
 
-Navigate to the ```test_input``` folder if you haven't done yet:
+### Load parameters and write to timeseries files
+Run files located in scripts_loadParameters with submit.sh
+Uncomment within submit.sh:
+`python -u ./scripts/run_estimation.py &`
 
-Create conda environment with python=3.7 and all packages mentioned in environment.yml
-`conda create --name <env_name> --file ./<path_to>/config/environment.yml`
-
-Activate conda environment
-`conda activate <env_name>`
-
-Install package which is not mentioned in environment.yml
-`pip install func_timeout`
-
-If pymc3 can be loaded as module in PPC cluster, you may need to install mkl_rt package 
-`conda install mkl`
-
-You may optionally 
-`cp config/theanorc ~/.theanorc`
-
-Load compiler
-`module load compiler/gnu/7.3.0`
-
-In the root package directory 
-`pip install -e .`
-
-Override the conda setting with 
-`export CXX=g++`
-
-
-## USAGE
-
-The parallelization part to run large datasets is currently taylored to the supercomputer at the Potsdam Institute for Climate Impact Research using the [slurm scheduler](https://slurm.schedmd.com/documentation.html). Generalizing it into a package is ongoing work. We use the GNU compiler as the many parallel compile jobs through jobarrays and JIT compilation conflict with the few Intel licenses.
-
-Adjust `settings.py`
-
-
-**Option 1 for input data (sample):**
-
-Use the provided sample dataset, which is already preprocessed, located in `./test-input/GSWP3-W5E5/`. In this subfolder the datasets for the variables precipiation (pr) and air temperature (tas) are provided, as also a land-sea mask.
-Skip the section about Preprocessing and run following python scripts directly to generate counterfactual data:
-```python run_estimation.py```
-```python merge_cfact.py```
-
-
-**Option 2 for input data (user-defined):**
-
-Alternatively load input data from [https://data.isimip.org](https://data.isimip.org)]
-The input for one variable is a single netcdf file containing all time steps. 
-Create smoothed gmt time series as predictor using `preprocessing/calc_gmt_by_ssa.py` with adjusted file-paths.
-Get auxiliary *tasskew* and *tasrange* time series using `preprocessing/create_tasrange_tasskew.py` with adjusted file-paths.
-
-For estimating parameter distributions (above step 1) and smaller datasets
-`python run_estimation.py`
-
-For larger datasets, produce a `submit.sh` file via
-`python create_submit.py`
-
-Then submit to the slurm scheduler
-`sbatch submit.sh`
-
-For merging the single timeseries files to netcdf datasets
-`python merge_cfact.py`
-
-
-## Handle several runs with different settings
-
-Copy the `settings.py`, `run_estimation.py`, `merge_cfact.py` and `submit.sh` to a separate directory,
-for example `myrunscripts`. Adjust `settings.py` and `submit.sh`, in particular the output directoy, and continue as in Usage.
-
-
-## Preprocessing
-
-Example for GSWP3-W5E5 dataset, which is first priority in ISIMIP3a.
-
-`cd preprocess` 
-Download decadal data and merge it into one file per variable.
-Adjust output paths and
-`python merge_data.py`
-Approximately 1 hour.
-
-Produce GMT from gridded surface air temperature and use SSA to smooth it.
-Use a separate conda env to cover SSA package dependencies.
-Adjust output paths and
-`python calc_gmt_by_ssa.py`
-Approximately less than an hour.
-
-Create tasrange and tasskew from tas variables.
-Adjust output paths and
-`python create_tasmin_tasmax.py`
-Approximately an hour.
-
-For testing smaller dataset, use
-`python subset_data.py`
-Add sub01 to filenames, if no subsetting is used.
-
-Land-sea file creation
-We use the ISIMIP2b land-sea mask to select only land cells for processing.
-Smaller datasets through subsetting were created using CDO.
-
-
-## Postprocessing
-
-For tasmin and tasmax, we do not estimate counterfactual time series individually to avoid large relative errors in the daily temperature range as pointed out by (Piani et al. 2010). Following (Piani et al. 2010), we estimate counterfactuals of the daily temperature range tasrange = tasmax - tasmin and the skewness of the daily temperature tasskew = (tas - tasmin) / tasrange. Use [create_tasmin_tasmax.py](postprocessing/create_tasmin_tasmax.py)
-with adjusted paths for the _tas_, _tasrange_ and _tasskew_ counterfactuals.
-
-A counterfactual huss is derived from the counterfacual tas, ps and hurs using the equations of Buck (1981) as described in Weedon et al. (2010). Use [derive_huss.sh](postprocessing/derive_huss.sh)
-with adjusted file names and the required time range.
-
-
-## Example
-
-See [here](examples/tas_example.ipynb) for a notebook visualizing the generated counterfactual data.
 
 
 ## Example for SLURM job script:
