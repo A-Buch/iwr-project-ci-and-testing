@@ -16,7 +16,7 @@ parameter_filepath = s.output_dir / s.trace_file
 parameter_filepath_nan = Path.joinpath(s.output_dir, Path(s.trace_file).stem + "_nan.nc4") 
 
 # set filling value "1.e+20" as nan
-cmd = "cdo setctomiss,1.e+20 " +str(parameter_filepath) + " " + str(parameter_filepath_nan)
+cmd = "cdo -setmissval,1.e+20 " +str(parameter_filepath) + " " + str(parameter_filepath_nan)
 try:
     print(cmd)
     subprocess.check_call(cmd, shell=True)
