@@ -101,15 +101,17 @@ estimator = est.estimator(s)
 
 TIME0 = datetime.now()
 
-## create file to store parameters if not exists
-trace_filepath = s.output_dir / s.trace_file
-if not os.path.exists(trace_filepath):
-   out = nc.Dataset(trace_filepath, "w", format="NETCDF4") # create empty file if not exists
-   pp.form_global_nc(out, nct[:], lats, lons, None, nct.units)
-   out.close()
+## only for writing: create file to store parameters if not exists
+# trace_filepath = s.output_dir / s.trace_file
+# if not os.path.exists(trace_filepath):
+   # out = nc.Dataset(trace_filepath, "w", format="NETCDF4") # create empty file if not exists
+   # pp.form_global_nc(out, nct[:], lats, lons, None, nct.units)
+   # out.close()
 
 ## only for load : TODO fix this by just loading existing tracefile
+trace_filepath = s.output_dir / s.trace_file
 parameter_f = xr.open_dataset(trace_filepath)
+
 
 for n in run_numbers[:]:
     sp = df_specs.loc[n, :]
@@ -135,13 +137,33 @@ for n in run_numbers[:]:
     data = obs_data.variables[s.variable][:, sp["index_lat"], sp["index_lon"]]
     df, datamin, scale = dh.create_dataframe(nct[:], nct.units, data, gmt, s.variable)
 
-    trace_filepath = s.output_dir / s.trace_file
-    out = nc.Dataset(trace_filepath, "a", format="NETCDF4") # write to existing file
+    # t = threading.Lock()
+    # #value = 0
+    # ## load file to store parameters 
+    # trace_filepath = s.output_dir / s.trace_file
+    # out = nc.Dataset(trace_filepath, "a", format="NETCDF4") # write to existing file
 
+    # logging.info("Thread %s: starting update", "sts")
+    # with t:
+        # print("Thread has lock", "sts2")
+        # trace, dff = func_timeout(
+            # #s.timeout, estimator.estimate_parameters, args=(df, sp["lat"], sp["lon"], s.map_estimate)
+            # s.timeout, estimator.estimate_parameters, args=(nct[:], out,  df, sp["lat"], sp["lon"], sp["index_lat"], sp["index_lon"], s.map_estimate)
+        # )
+        # logging.debug("Thread %s about to release lock", "sts3")
+
+
+
+    ## only for writing parameters to nc file
+    #trace_filepath = s.output_dir / s.trace_file
+    #out = nc.Dataset(trace_filepath, "a", format="NETCDF4") # write to existing file
     try:
         dff = func_timeout(
-            s.timeout, estimator.estimate_parameters, args=(df, sp["lat"], sp["lon"], s.map_estimate)
+        s.timeout, estimator.estimate_parameters, args=(df, sp["lat"], sp["lon"], s.map_estimate)
         )
+        # trace, dff = func_timeout(
+        #    s.timeout, estimator.estimate_parameters, args=(nct[:], out,  df, sp["lat"], sp["lon"], sp["index_lat"], sp["index_lon"], s.map_estimate)
+        # )
 
     except (FunctionTimedOut, ParallelSamplingError, ValueError) as error:
         if str(error) == "Modes larger 1 are not allowed for the censored model.":
@@ -160,14 +182,35 @@ for n in run_numbers[:]:
             )
         continue
 
-    ## load parameters from file
-    df_with_cfact = estimator.estimate_timeseries(dff, parameter_f, sp["index_lat"], sp["index_lon"], datamin, scale, s.map_estimate)
-    dh.save_to_disk(df_with_cfact, fname_cell, sp["lat"], sp["lon"], s.storage_format) 
+        ## used for threading test:
+        # ## write parameters to file, generating org cfact
+        # df_with_cfact = estimator.estimate_timeseries(dff, trace, datamin, scale, s.map_estimate)  
+
+    #print("\n dff, parameter_f, index_lat, sp[index_lon:")
+    #print(dff, parameter_f, sp["index_lat"], sp["index_lon"])
+    #print("parameter_f.mu:\n", parameter_f.mu.values.shape, parameter_f.mu.values)
+    
+    ## write parameters to file, generating org cfact
+    #df_with_cfact = estimator.estimate_timeseries(dff, trace, datamin, scale, s.map_estimate)  
+
+    ## make nicer TODO, skip cells which are sea area and therefore have no parameter entries
+    print("parameter_f.mu[:,sp[index_lat], sp[index_lon]]", parameter_f.mu[:, int(sp["index_lat"]), int(sp["index_lon"])])
+    t = parameter_f.mu[:, int(sp["index_lat"]), int(sp["index_lon"])]
+    t = t[ ~np.isnan(t)]
+    print("t",t)
+    if bool(t.any())==False:
+    #if parameter_f.mu[:, int(sp["index_lat"]), int(sp["index_lon"])].values.size <= 0:
+        print("empty cell, skipping to next cell", int(sp["index_lat"]), int(sp["index_lon"]))
+        continue  # skip to next cell
+    else:
+        print("not empty")
+        ## load parameters from file
+        df_with_cfact = estimator.estimate_timeseries(dff, parameter_f, sp["index_lat"], sp["index_lon"], datamin, scale, s.map_estimate)
+        dh.save_to_disk(df_with_cfact, fname_cell, sp["lat"], sp["lon"], s.storage_format) 
 
 
 # only load
 parameter_f.close()
-
 obs_data.close()
 nc_lsmask.close()
 print(

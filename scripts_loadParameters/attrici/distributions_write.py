@@ -2,40 +2,17 @@ import numpy as np
 from scipy import stats
 import pymc3 as pm
 
-import attrici.datahandler as dh
-import attrici.models as models
-import attrici.fourier as fourier
-import settings as s
-import xarray as xr
-
-
 
 class Distribution(object):
     def __init__(self):
+
         print(f"Using {type(self).__name__} distribution model.")
 
-
-    def resample_missing(self, df, parameter_file, lat_idx, lon_idx, subtrace, model, progressbar, map_estimate):
+    def resample_missing(self, trace, df, subtrace, model, progressbar, map_estimate):
         # FIXME: this breaks if first parameter does not have time dimension
         # but second parameter has. It therefore requires an order in self.params
         if map_estimate:
             print("Trace is not complete due to masked data. Resample missing.")
-
-            trace = {}
-            print("parameter_file:", parameter_file)
-            ## TODO: get names from nc.file or as argument
-            parameter_names = ['weights_longterm_intercept', 'weights_longterm_trend', 'weights_fc_intercept_0', 'weights_fc_intercept_1',
-                'weights_fc_intercept_2', 'weights_fc_intercept_3', 'weights_fc_trend', 'weights_sigma_longterm_intercept',
-                'weights_sigma_fc_intercept_0', 'weights_sigma_fc_intercept_1', 'weights_sigma_fc_intercept_2', 'weights_sigma_fc_intercept_3',
-                'mu', 'sigma', 'logp']
-            print("lat_idx, lon_idx", lat_idx, lon_idx)
-            for parameter_name in parameter_names:
-                param_values = parameter_file[parameter_name][:, int(lat_idx), int(lon_idx)]
-                ### test if this solves vectorization errror: 
-                ## was done to clip parameters to their amount of values per cell, usually 1 layer or 25933 layers
-                param_values = param_values[ ~np.isnan(param_values)]  ## TODO improve by defining flexible z-dimension of paramters.nc (currently z-dim is length of timesteps)
-                trace[parameter_name] = param_values.data.astype('float').squeeze()  # float64, remove entries with nan
-            print("shortend trace:", trace)
 
             with model:
                 # use all data for the model specific data-inputs
@@ -55,20 +32,20 @@ class Distribution(object):
                         print(f"replaced {key} in model with full data-set")
                     except KeyError as e:
                         pass
+
                 for key, df_key in fourier_vars.items():
                     try:
                         pm.set_data({key: df.filter(regex=df_key).values})
                         print(f"replaced {key} in model with full data-set")
                     except KeyError as e:
                         pass
+
                 trace_obs = pm.sample_posterior_predictive(
                     [trace],
                     samples=1,
-                    #var_names=self.params + ['logp'],
-                    var_names=['mu', 'sigma'] + ['logp'],  # + ["obs"],
-                    progressbar=progressbar
+                    var_names=self.params + ['logp'],  # + ["obs"],
+                    progressbar=progressbar,
                 )
-
                 for gmt in ['gmt', 'gmtv']:
                     try:
                         pm.set_data({gmt: np.zeros_like(df['gmt_scaled'])})
@@ -77,21 +54,14 @@ class Distribution(object):
                 trace_cfact = pm.sample_posterior_predictive(
                     [trace],
                     samples=1,
-                    #var_names=self.params + ['logp'],
-                    var_names= ['mu', 'sigma'] + ['logp'],  # + ["obs"],
-                    progressbar=progressbar
+                    var_names=self.params + ['logp'],  # + ["obs"],
+                    progressbar=progressbar,
                 )
             print("Resampled missing.")
-            print("trace obs and cfact: ", trace_obs, trace_cfact)
-            
-            
         else:
             print("Trace is not complete due to masked data. Resample missing.")
-            print("self.params[0]", trace["mu"], self.params)
-            print("trace", trace["mu"])
             print(
                 "Trace length:",
-                #trace[self.params[0]].shape[0],
                 trace[self.params[0]].shape[1],
                 "Dataframe length",
                 df.shape[0],
@@ -122,8 +92,9 @@ class Distribution(object):
                         print(f"replaced {key} in model with full data-set")
                     except KeyError as e:
                         pass
+
                 trace_obs = pm.sample_posterior_predictive(
-                    [trace][-subtrace:],
+                    trace[-subtrace:],
                     samples=subtrace,
                     var_names=self.params + ['logp'],
                     progressbar=progressbar,
