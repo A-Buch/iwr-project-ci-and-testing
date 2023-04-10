@@ -21,7 +21,6 @@ def read_from_disk(data_path):
 def form_global_nc(ds, time, lat, lon, vnames, torigin):
 
     # FIXME: can be deleted once merge_cfact is fully replaced by write_netcdf
-
     ds.createDimension("time", None)
     ds.createDimension("lat", lat.shape[0])
     ds.createDimension("lon", lon.shape[0])
@@ -29,14 +28,17 @@ def form_global_nc(ds, time, lat, lon, vnames, torigin):
     times = ds.createVariable("time", "f8", ("time",))
     longitudes = ds.createVariable("lon", "f8", ("lon",))
     latitudes = ds.createVariable("lat", "f8", ("lat",))
-    for var in vnames:
-        data = ds.createVariable(
-            var,
-            "f4",
-            ("time", "lat", "lon"),
-            chunksizes=(time.shape[0], 1, 1),
-            fill_value=1e20,
-        )
+    if vnames == None:
+        pass 
+    else:  
+        for var in vnames:
+            data = ds.createVariable(
+                var,
+                "f4",
+                ("time", "lat", "lon"),
+                chunksizes=(time.shape[0], 1, 1),
+                fill_value=1e20,
+            )
     times.units = torigin
     latitudes.units = "degree_north"
     latitudes.long_name = "latitude"
@@ -49,8 +51,8 @@ def form_global_nc(ds, time, lat, lon, vnames, torigin):
     longitudes[:] = lon
     times[:] = time
 
-def rechunk_netcdf(ncfile, ncfile_rechunked):
 
+def rechunk_netcdf(ncfile, ncfile_rechunked):
 
     TIME0 = datetime.now()
 
@@ -107,45 +109,17 @@ def replace_nan_inf_with_orig(variable, source_file, ncfile_rechunked):
     return ncfile_valid
 
 
-def round_float_down(num, step=0):
-    '''
-    Takes a float and rounds it always down to user-defined decimal place
-    params: num : foat number
-    params: step : decimal place
-    return: float
-    Copyied from : https://stackoverflow.com/questions/9404967/taking-the-floor-of-a-float
-    '''
-    if not step:
-        return math.floor(num)
-    if step < 0:
-        mplr = 10 ** (step * -1)
-        return math.floor(num / mplr) * mplr
-    ncnt = step
-    if 1 > step > 0:
-        ndec, ncnt = .0101, 1
-        while ndec > step:
-            ndec *= .1
-            ncnt += 1
-    mplr = 10 ** ncnt
-    return round(math.floor(num * mplr) / mplr, ncnt)
-
-
-def rescale_squared_aoi(coord_list, coord_float):
+def rescale_aoi(coord_list):
     '''
     Rescales squared aoi, returns rescaled indices latitude or longitude
     params:  
         coord_list: list of lat or lon coordinates of the aoi
         coord_float: float, latitude or longitude derived from timeseries filename
-    return: float
+    return: integer
     '''
-    
-    ## get correct amount of indices by rounding down always the minimum extent and round up the maximum extent
-    coord_min = round_float_down(min(coord_list), 2) 
-    coord_max = math.ceil(max(coord_list)*100) / 100 
+    # Code modified based on: https://stackoverflow.com/questions/41037506/how-to-replace-values-by-their-position-in-the-ordered-list-of-values-using-nump
+    coord_indice = np.unique(coord_list,return_inverse=1)[1]
 
-    ## Formular: (new_max - new_min) / (old_max - old_min) * (v - old_min) + new_min
-    coord_indice = int( (coord_list.shape[0] - 0) / ( coord_max - coord_min) * (coord_float - coord_min) + 0 )
-
-    return coord_indice
+    return coord_indice.tolist()
 
 
