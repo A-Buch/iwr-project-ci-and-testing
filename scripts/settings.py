@@ -25,7 +25,7 @@ elif user == "annabu":
     log_dir = "./log"
 
 ## for interpolation test
-testarea = "testarea_16"
+testarea = "testarea_31"
 
 input_dir = Path(data_dir) / "meteo_data" 
 #input_dir = Path(data_dir) / "test_input"
@@ -55,28 +55,28 @@ subset = 1  # only use every subset datapoint for bayes estimation for speedup
 startdate = None # may at a date in the format '1950-01-01' to train only on date from after that date
 
 # for example "GSWP3", "GSWP3-W5E5"
-dataset ="GSWP3-W5E5"
-#dataset ="ERA5"  # for EFAS-project
+#dataset ="GSWP3-W5E5"
+dataset ="ERA5"  # for EFAS-project
 # use a dataset with only subset spatial grid points for testing
 lateral_sub = 1
 #lateral_sub = 40
 
-
+# define shape of testarea, should be in shae of (n*3)+1
+file_len = 31  # 16
 
 ## nc.file storing free parameters 
-trace_file = f"{variable}_freeparameters_16.nc4"
+trace_file = f"{variable}_freeparameters_31.nc4"
 #trace_file = f"{variable}_parameters_16_v2_0.nc4" 
 #f"{variable}12_parameters_31.nc4"
-## load interpolated parameters
-#trace_file = f"{variable}12_parameters_31_ma_nan_n4_c.nc4"
 
-b_mask = "b_mask_for_interpolation_16.nc" #"b_mask_31.nc"
+
 gmt_file = dataset.lower() + "_ssa_gmt.nc4"
-landsea_file = "landmask_for_testing_16.nc" #"landseamask_31_setmissval.nc" #full" + ".nc"
-#source_file = variable + "12_" + dataset.lower() + "_1950_2020_00023_ba_ncpdq_merged_31.nc4"
-source_file = variable + "_" + dataset.lower() + "_merged_crop_16" + ".nc4"
+#landsea_file = "landmask_for_testing_16.nc" 
+landsea_file = "landseamask_31_setmissval.nc" #full" + ".nc"
+source_file = variable + "12_" + dataset.lower() + "_1950_2020_00023_ba_ncpdq_merged_31.nc4" 
+#source_file = variable + "_" + dataset.lower() + "_merged_crop_16" + ".nc4"
 #cfact_file = variable  + "_cfactual_shape31_interpolated_v2.nc4"  #16_v2_0.nc4"
-cfact_file = variable  + "_cfactual_freeparameters_16.nc4"  #16_v2_0.nc4"
+cfact_file = variable  + "_cfactual_freeparameters_31_interp.nc4"  #16_v2_0.nc4"
 
 
 # .h5 or .csv

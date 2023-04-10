@@ -69,8 +69,8 @@ class Distribution(object):
             
         else:
             print("Trace is not complete due to masked data. Resample missing.")
-            print("self.params[0]", trace["mu"], self.params)
-            print("trace", trace["mu"])
+            print("self.params[0]", self.params)
+            print("trace", trace)
             print(
                 "Trace length:",
                 trace[self.params[0]].shape[1],

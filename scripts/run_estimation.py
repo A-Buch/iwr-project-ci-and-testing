@@ -13,6 +13,7 @@ import attrici
 import attrici.estimator as est
 import attrici.datahandler as dh
 import attrici.postprocess as pp
+import attrici.interpolate_parameters as ip
 import settings as s
 from pymc3.parallel_sampling import ParallelSamplingError
 import logging
@@ -48,13 +49,13 @@ print("submitted:", submitted)
 
 dh.create_output_dirs(s.output_dir)
 
-gmt_file = s.input_dir / s.gmt_file
+gmt_file = s.input_dir / s.dataset / s.testarea / s.gmt_file
 ncg = nc.Dataset(gmt_file, "r")
 gmt = np.squeeze(ncg.variables["tas"][:])
 ncg.close()
 
 input_file = s.input_dir / s.dataset / s.testarea / s.source_file.lower()
-landsea_mask_file = s.input_dir / s.landsea_file
+landsea_mask_file = s.input_dir /  s.dataset / s.testarea / s.landsea_file
 
 obs_data = nc.Dataset(input_file, "r")
 nc_lsmask = nc.Dataset(landsea_mask_file, "r")
@@ -64,7 +65,7 @@ lons = obs_data.variables["lon"][:]
 longrid, latgrid = np.meshgrid(lons, lats)
 jgrid, igrid = np.meshgrid(np.arange(len(lons)), np.arange(len(lats)))
 
-ls_mask = nc_lsmask.variables["area_European_01min"][:,:] #["mask"][0, :, :] #area_European_01min[:,:] 
+ls_mask = nc_lsmask.variables["mask"][0, :, :] #["area_European_01min"][:,:] 
 df_specs = pd.DataFrame()
 df_specs["lat"] = latgrid[ls_mask == 1]
 df_specs["lon"] = longrid[ls_mask == 1]
@@ -100,22 +101,21 @@ estimator = est.estimator(s)
 
 TIME0 = datetime.now()
 
-## create file to store parameters if not exists
+## create file to store parameters if not exists, otherwise interpolate existing file
 trace_filepath = s.output_dir / s.trace_file
+
 if os.path.exists(trace_filepath):
     trace_file_loading = True
-    parameter_f = xr.open_dataset(trace_filepath_loading)
+    print(f"Using {s.trace_file} for interpolation")
+    interpolated_trace_filepath = ip.interpolation_parameters(trace_filepath, landsea_mask_filepath)
+    parameter_f = xr.open_dataset(interpolated_trace_filepath, engine="netcdf4")
 else:
     trace_file_loading = False
     out = nc.Dataset(trace_filepath, "w", format="NETCDF4") # create empty file if not exists
-    pp.form_global_nc(out, None, lats, lons, None, nct.units)
+    pp.form_global_nc(out, nct[:8], lons, lats, None, nct.units)  ## TODO replace 8layers with max lenght of parameter values, flipped lats, lons ->  lons, lats,
     out.close()
-    parameter_f = nc.Dataset(trace_filepath, "a", format="NETCDF4") ## TODO: check if unnecessary
+    parameter_f = nc.Dataset(trace_filepath, "a", format="NETCDF4") ## reopen for appending parameters loopwise
 
-# ## check if ts creation wokrs without mu and sigma
-# parameter_f = parameter_f.drop(labels=["mu", "sigma"])
-# parameter_f = parameter_f.dropna(dim="time", how="all")
-# print("parameter_f", parameter_f)
 
 
 for n in run_numbers[:]:
@@ -129,6 +129,11 @@ for n in run_numbers[:]:
         s.output_dir, "timeseries", sp["lat"], sp["lon"], s.variable
     )
     fname_cell = dh.get_cell_filename(outdir_for_cell, sp["lat"], sp["lon"], s)
+
+    outdir_for_cell_interp = dh.make_cell_output_dir(
+        s.output_dir, "timeseries_interpolated", sp["lat"], sp["lon"], s.variable
+    )
+    fname_cell_interp = dh.get_cell_filename(outdir_for_cell_interp, sp["lat"], sp["lon"], s)
 
     if s.skip_if_data_exists:
         try:
@@ -144,21 +149,24 @@ for n in run_numbers[:]:
 
     ## load if free_paramss.nc contains parameter values , otherwise create new free_params
     if trace_file_loading: 
-        print(f"Loading parameters for coordinates {sp["lat"], sp["lon"]} from {s.trace_file}")
+        print(f"Loading interpolated parameters for position {sp.index_lat, sp.index_lon} from {s.trace_file}")
         dff, free_params = func_timeout(
             s.timeout, estimator.load_parameters, args=(parameter_f, df, sp["index_lat"], sp["index_lon"], s.map_estimate)
         )
+        print("Using reloaded and interpolated parameters for ts creation")
+        
+        ## make timeseries
+        df_with_cfact = estimator.estimate_timeseries(dff, free_params, datamin, scale, s.map_estimate)
+        dh.save_to_disk(df_with_cfact, fname_cell_interp, sp["lat"], sp["lon"], s.storage_format) 
+
     else:
-        print("No parameters exists, creating new ones for coordinates: ", sp["lat"], sp["lon"], f" and writing them to {s.trace_file}")
+        print(f"No parameters exists for position {sp.index_lat, sp.index_lon}, creating new ones and writing them to {s.trace_file}")
         try:
+            # TODO replace "8" with max lenght of parameter values
             dff, free_params = func_timeout(
-                s.timeout, estimator.estimate_parameters, args=(nct[:], parameter_f, df, sp["lat"], sp["lon"], sp["index_lat"], sp["index_lon"], s.map_estimate)
+                s.timeout, estimator.estimate_parameters, args=(nct[:8], parameter_f, df, sp["lat"], sp["lon"], sp["index_lat"], sp["index_lon"], s.map_estimate)
             )
-         ## interpolated parameters
-         
-         ## load them to create ts based on interpolated parameters
-         
-         
+
         except (FunctionTimedOut, ParallelSamplingError, ValueError) as error:
             if str(error) == "Modes larger 1 are not allowed for the censored model.":
                 raise error
@@ -175,14 +183,37 @@ for n in run_numbers[:]:
                     )
                 )
             continue
+        print("Using new created parameters for ts creation")
 
-    df_with_cfact = estimator.estimate_timeseries(dff, free_params, datamin, scale, s.map_estimate)
-    dh.save_to_disk(df_with_cfact, fname_cell, sp["lat"], sp["lon"], s.storage_format) 
 
-# only load
+## interpolate newly created parameters and make timeseries
+if trace_file_loading == False:
+    interpolated_trace_filepath = ip.interpolation_parameters(trace_filepath, landsea_mask_filepath)
+    parameter_f = xr.open_dataset(interpolated_trace_filepath, engine="netcdf4")
+
+    ## TODO find better way to implement code in previous loop
+    for n in run_numbers[:]:
+        sp = df_specs.loc[n, :]
+        data = obs_data.variables[s.variable][:, sp["index_lat"], sp["index_lon"]]
+        df, datamin, scale = dh.create_dataframe(nct[:], nct.units, data, gmt, s.variable)
+        ## load free_parameters.nc
+        print(f"Loading interpolated parameters for position {sp.index_lat, sp.index_lon} from {s.trace_file}")
+        dff, free_params = func_timeout(
+            s.timeout, estimator.load_parameters, args=(parameter_f, df, sp["index_lat"], sp["index_lon"], s.map_estimate)
+        )
+        ## make timeseries
+        df_with_cfact = estimator.estimate_timeseries(dff, free_params, datamin, scale, s.map_estimate)
+        dh.save_to_disk(df_with_cfact, fname_cell_interp, sp["lat"], sp["lon"], s.storage_format) 
+
+## alread loaded and interpolated parameters
+else:
+    pass
+
+
 parameter_f.close()
 obs_data.close()
 nc_lsmask.close()
+
 print(
     "Estimation completed for all cells. It took {0:.1f} minutes.".format(
         (datetime.now() - TIME0).total_seconds() / 60

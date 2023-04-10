@@ -89,11 +89,7 @@ class estimator(object):
                     if param_name in out.variables.keys():
                         pass
                     else:
-                        ## TODO improve Varibale Creation by defining flexible z-dimension of paramters.nc --> fix time.shape[0]
-                        ## TODO same in load_parameters() in which unnecessary layers are removed
-                        #out.createVariable(param_name, "f4", ("time", "lat", "lon"), chunksizes=(len(values_per_parameter), 1, 1), fill_value=1e20) 
                         out.createVariable(param_name, "f4", ("time", "lat", "lon"), chunksizes=(time.shape[0], 1, 1), fill_value=1e20) 
-                    print("writing", len(values_per_parameter), "value(s) of parameter", param_name)
                     out.variables[param_name][ :, int(lat_idx), int(lon_idx)] = values_per_parameter
                     #for n in range(len(values_per_parameter)):
                         #out.variables[param_name][ n, int(lat_idx), int(lon_idx)] = values_per_parameter[n] #np.array(values_per_parameter[n])
@@ -102,7 +98,6 @@ class estimator(object):
             ## TODO: check if unnecessary
             except Exception as e:
                 print("Problem with saved trace:", e, ". Redo parameter estimation.")
-                print("est.except")
                 trace = pm.find_MAP(model=self.model)
                 free_params = {key: value for key, value in trace.items()
                                        if key.startswith('weights') or key=='logp'}
@@ -118,9 +113,7 @@ class estimator(object):
                     if param_name in out.variables.keys():
                         pass
                     else:
-                        #out.createVariable(param_name, "f4", ("time", "lat", "lon"), chunksizes=(len(values_per_parameter), 1, 1), fill_value=1e20) 
                         out.createVariable(param_name, "f4", ("time", "lat", "lon"), chunksizes=(time.shape[0], 1, 1), fill_value=1e20) 
-                    print("writing", len(values_per_parameter), "value(s) of parameter", param_name)
                     out.variables[param_name][ :, int(lat_idx), int(lon_idx)] = values_per_parameter
                 print(f"wrote all {len(param_names)} to cell position",  int(lat_idx), int(lon_idx))
 
@@ -151,7 +144,6 @@ class estimator(object):
                     if param_name in out.variables.keys():
                         pass
                     else:
-                        #out.createVariable(param_name, "f4", ("time", "lat", "lon"), chunksizes=(time[:8], 1, 1), fill_value=1e20) 
                         out.createVariable(param_name, "f4", ("time", "lat", "lon"), chunksizes=(time.shape[0], 1, 1), fill_value=1e20) 
                     print("writing", len(values_per_parameter), "value(s) of parameter", param_name)
                     out.variables[param_name][ :, int(lat_idx), int(lon_idx)] = values_per_parameter
@@ -174,7 +166,6 @@ class estimator(object):
                     if param_name in out.variables.keys():
                         pass
                     else:
-                        #out.createVariable(param_name, "f4", ("time", "lat", "lon"), chunksizes=(time[:8], 1, 1), fill_value=1e20) 
                         out.createVariable(param_name, "f4", ("time", "lat", "lon"), chunksizes=(time.shape[0], 1, 1), fill_value=1e20) 
                     print("writing", len(values_per_parameter), "value(s) of parameter", param_name)
                     out.variables[param_name][ :, int(lat_idx), int(lon_idx)] = values_per_parameter
@@ -194,20 +185,16 @@ class estimator(object):
 
         self.model = self.statmodel.setup(df_subset)
 
-
         ## load free_parameters from nc file
         free_parameters = {}
         parameter_names = list(parameter_f.keys())
-        print("run_est.py: param_names", parameter_names)
 
         print("lat_idx, lon_idx", lat_idx, lon_idx)
         for parameter_name in parameter_names:
             param_values = parameter_f[parameter_name][:, int(lat_idx), int(lon_idx)]
-            ### test if this solves vectorization errror: 
-            ## was done to clip parameters to their amount of values per cell, usually 1 layer or 25933 layers
-            param_values = param_values[ ~np.isnan(param_values)]  ## TODO improve by defining flexible z-dimension of paramters.nc (currently z-dim is length of timesteps)
+            ## TODO: make this nicer: clip parameters to their amount of values per cell, usually 1 layer or <8 layers
+            param_values = param_values[ ~np.isnan(param_values)]  ## TODO improve by defining flexible z-dimension of paramters.nc
             free_parameters[parameter_name] = param_values.data.astype('float').squeeze()  # float64, remove entries with nan
-
         return dff, free_parameters
 
 
