@@ -66,6 +66,9 @@ longrid, latgrid = np.meshgrid(lons, lats)
 jgrid, igrid = np.meshgrid(np.arange(len(lons)), np.arange(len(lats)))
 
 ls_mask = nc_lsmask.variables["mask"][0, :, :] #["area_European_01min"][:,:] 
+ls_mask[np.isnan(ls_mask)] = 1.0   # removing sea area from landseamask
+print("removing sea area from landseamask")
+
 df_specs = pd.DataFrame()
 df_specs["lat"] = latgrid[ls_mask == 1]
 df_specs["lon"] = longrid[ls_mask == 1]
@@ -107,14 +110,13 @@ trace_filepath = s.output_dir / s.trace_file
 if os.path.exists(trace_filepath):
     trace_file_loading = True
     print(f"Using {s.trace_file} for interpolation")
-    interpolated_trace_filepath = ip.interpolation_parameters(trace_filepath, landsea_mask_filepath)
-    parameter_f = xr.open_dataset(interpolated_trace_filepath, engine="netcdf4")
+    parameter_f = ip.interpolation_parameters(trace_filepath, landsea_mask_file)
 else:
     trace_file_loading = False
-    out = nc.Dataset(trace_filepath, "w", format="NETCDF4") # create empty file if not exists
-    pp.form_global_nc(out, nct[:8], lons, lats, None, nct.units)  ## TODO replace 8layers with max lenght of parameter values, flipped lats, lons ->  lons, lats,
+    out = nc.Dataset(trace_filepath, "w", format="NETCDF4") 
+    pp.form_global_nc(out, nct[:8], lats, lons, None, nct.units)
     out.close()
-    parameter_f = nc.Dataset(trace_filepath, "a", format="NETCDF4") ## reopen for appending parameters loopwise
+    parameter_f = nc.Dataset(trace_filepath, "a", format="NETCDF4")
 
 
 
@@ -125,10 +127,10 @@ for n in run_numbers[:]:
     print(
         "This is SLURM task", task_id, "run number", n, "lat,lon", sp["lat"], sp["lon"]
     )
-    outdir_for_cell = dh.make_cell_output_dir(
-        s.output_dir, "timeseries", sp["lat"], sp["lon"], s.variable
-    )
-    fname_cell = dh.get_cell_filename(outdir_for_cell, sp["lat"], sp["lon"], s)
+    # outdir_for_cell = dh.make_cell_output_dir(
+        # s.output_dir, "timeseries", sp["lat"], sp["lon"], s.variable
+    # )
+    # fname_cell = dh.get_cell_filename(outdir_for_cell, sp["lat"], sp["lon"], s)
 
     outdir_for_cell_interp = dh.make_cell_output_dir(
         s.output_dir, "timeseries_interpolated", sp["lat"], sp["lon"], s.variable
@@ -137,8 +139,8 @@ for n in run_numbers[:]:
 
     if s.skip_if_data_exists:
         try:
-            dh.test_if_data_valid_exists(fname_cell)
-            print(f"Existing valid data in {fname_cell} . Skip calculation.")
+            dh.test_if_data_valid_exists(fname_cell_interp)
+            print(f"Existing valid data in {fname_cell_interp} . Skip calculation.")
             continue
         except Exception as e:
             print(e)
@@ -154,10 +156,18 @@ for n in run_numbers[:]:
             s.timeout, estimator.load_parameters, args=(parameter_f, df, sp["index_lat"], sp["index_lon"], s.map_estimate)
         )
         print("Using reloaded and interpolated parameters for ts creation")
-        
-        ## make timeseries
-        df_with_cfact = estimator.estimate_timeseries(dff, free_params, datamin, scale, s.map_estimate)
-        dh.save_to_disk(df_with_cfact, fname_cell_interp, sp["lat"], sp["lon"], s.storage_format) 
+
+        ## TODO current workaround: make nicer codeblock for handling of sea area (empty cells)
+        t = parameter_f.logp[:, int(sp["index_lat"]), int(sp["index_lon"])]
+        t = t[ ~np.isnan(t)]
+        print("t",t)
+        if bool(t.any())==False:
+            print("empty cell, skipping to next cell", int(sp["index_lat"]), int(sp["index_lon"]))
+            continue  # skip to next cell
+        else:
+            ## make timeseries
+            df_with_cfact = estimator.estimate_timeseries(dff, free_params, datamin, scale, s.map_estimate)
+            dh.save_to_disk(df_with_cfact, fname_cell_interp, sp["lat"], sp["lon"], s.storage_format) 
 
     else:
         print(f"No parameters exists for position {sp.index_lat, sp.index_lon}, creating new ones and writing them to {s.trace_file}")
@@ -183,29 +193,45 @@ for n in run_numbers[:]:
                     )
                 )
             continue
-        print("Using new created parameters for ts creation")
 
 
-## interpolate newly created parameters and make timeseries
+# ## interpolate newly created parameters and make timeseries
 if trace_file_loading == False:
-    interpolated_trace_filepath = ip.interpolation_parameters(trace_filepath, landsea_mask_filepath)
-    parameter_f = xr.open_dataset(interpolated_trace_filepath, engine="netcdf4")
+    parameter_f = ip.interpolation_parameters(trace_filepath, landsea_mask_file)
+    print(f"Interpolating parameters from {trace_filepath}")
+    #print(f"Storing them in {interpolated_parameters}")
 
-    ## TODO find better way to implement code in previous loop
+
+    ## TODO find better way to implement code in previous loop or in a new script
     for n in run_numbers[:]:
         sp = df_specs.loc[n, :]
+        outdir_for_cell_interp = dh.make_cell_output_dir(
+            s.output_dir, "timeseries_interpolated", sp["lat"], sp["lon"], s.variable
+            )
+        fname_cell_interp = dh.get_cell_filename(outdir_for_cell_interp, sp["lat"], sp["lon"], s)
+
         data = obs_data.variables[s.variable][:, sp["index_lat"], sp["index_lon"]]
         df, datamin, scale = dh.create_dataframe(nct[:], nct.units, data, gmt, s.variable)
-        ## load free_parameters.nc
-        print(f"Loading interpolated parameters for position {sp.index_lat, sp.index_lon} from {s.trace_file}")
+        ## load parameters file
+        print("Using interpolated parameters for ts creation")
+        #print(f"Loading interpolated parameters for position {sp.index_lat, sp.index_lon}")
         dff, free_params = func_timeout(
             s.timeout, estimator.load_parameters, args=(parameter_f, df, sp["index_lat"], sp["index_lon"], s.map_estimate)
         )
-        ## make timeseries
-        df_with_cfact = estimator.estimate_timeseries(dff, free_params, datamin, scale, s.map_estimate)
-        dh.save_to_disk(df_with_cfact, fname_cell_interp, sp["lat"], sp["lon"], s.storage_format) 
 
-## alread loaded and interpolated parameters
+        ## TODO current workaround: make nicer codeblock for handling of sea area (empty cells)
+        t = parameter_f.logp[:, int(sp["index_lat"]), int(sp["index_lon"])]
+        t = t[ ~np.isnan(t)]
+        print("t",t)
+        if bool(t.any())==False:
+            print("empty cell, skipping to next cell", int(sp["index_lat"]), int(sp["index_lon"]))
+            continue  # skip to next cell
+        else:
+            ## make timeseries
+            df_with_cfact = estimator.estimate_timeseries(dff, free_params, datamin, scale, s.map_estimate)
+            dh.save_to_disk(df_with_cfact, fname_cell_interp, sp["lat"], sp["lon"], s.storage_format) 
+
+## already interpolated parameters and ts created
 else:
     pass
 

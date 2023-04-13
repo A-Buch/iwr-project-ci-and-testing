@@ -65,7 +65,7 @@ lateral_sub = 1
 file_len = 31  # 16
 
 ## nc.file storing free parameters 
-trace_file = f"{variable}_freeparameters_31.nc4"
+trace_file = f"{variable}_freeparameters_31_nolmask.nc4"
 #trace_file = f"{variable}_parameters_16_v2_0.nc4" 
 #f"{variable}12_parameters_31.nc4"
 
@@ -76,7 +76,7 @@ landsea_file = "landseamask_31_setmissval.nc" #full" + ".nc"
 source_file = variable + "12_" + dataset.lower() + "_1950_2020_00023_ba_ncpdq_merged_31.nc4" 
 #source_file = variable + "_" + dataset.lower() + "_merged_crop_16" + ".nc4"
 #cfact_file = variable  + "_cfactual_shape31_interpolated_v2.nc4"  #16_v2_0.nc4"
-cfact_file = variable  + "_cfactual_freeparameters_31_interp.nc4"  #16_v2_0.nc4"
+cfact_file = variable  + "_cfactual_freeparameters_31_interp_nolmask.nc4"  #16_v2_0.nc4"
 
 
 # .h5 or .csv
