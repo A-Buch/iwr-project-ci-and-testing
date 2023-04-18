@@ -9,6 +9,7 @@ import matplotlib.pylab as plt
 import subprocess
 import settings as s
 from pathlib import Path
+from scipy.ndimage import minimum_filter
 
 
 # remove_intermediate_files = False
@@ -26,16 +27,23 @@ def interpolation_parameters(parameter_filepath, landsea_mask_filepath):
     bmask[::3 , ::3] = np.int64(1)
     print("binary mask:\n", bmask)
 
-    #  mask parameter.nc file with binary mask
-    parameter_file_m = bmask * xr.open_dataset(parameter_filepath)
-
-    parameter_filepath_m = Path.joinpath(s.output_dir, Path(parameter_filepath).stem + "_m.nc4")
-    parameter_file_m.to_netcdf(parameter_filepath_m, format="NETCDF4")
+    ## get support cells from binary mask and coastline
+    parameter_file = xr.open_dataset(parameter_filepath)
+    parameter_file_m = bmask * parameter_file
+        
+    coastmask = parameter_file.notnull()
+    #m = minimum_filter(mask, size=2, mode='reflect')
+    coastmask = minimum_filter(coastmask.weights_fc_trend, size=(0,3,3), mode='nearest')
+    coastlines = parameter_file.where(~coastmask) # extract coast lines
+    parameter_file_m= parameter_file_m.merge(coastlines, join="outer", compat="no_conflicts") ### add coastline as support cells 
+    
+    parameter_file_m = Path.joinpath(s.output_dir, Path(parameter_filepath).stem + "_m.nc4")
+    parameter_file_m.to_netcdf(parameter_file_m, format="NETCDF4")
     parameter_file_m.close()
 
     ## fix: let cdo recognize nan values in masked parameters file
     print("set masked values of parameter file as nan")
-    parameter_filepath_m_nan = Path.joinpath(s.output_dir, Path(parameter_filepath_m).stem + "_nan.nc4")
+    parameter_filepath_m_nan = Path.joinpath(s.output_dir, Path(parameter_file_m).stem + "_nan.nc4")
 
     cmd = "cdo -setmissval,nan " + str(parameter_filepath_m) + " " + str(parameter_filepath_m_nan)
     #cmd = "cdo -setmissval,nan " + str(parameter_filepath_nan_m) + " " + str(parameter_filepath_nan_m_nan)
@@ -70,23 +78,25 @@ def interpolation_parameters(parameter_filepath, landsea_mask_filepath):
 
     ## clip new interpolated parameter file with landsea_mask to remove interpolation from sea area
     #input_dir + "/" + dataset + "/" + testarea  + f'/landseamask_{file_len}_setmissval.nc'
+    landsea_mask = xr.open_dataset(landsea_mask_filepath)
+    parameter_m_nan_n4 = xr.open_dataset(parameter_filepath_m_nan_n4)
     parameter_filepath_m_nan_n4_clipped = Path.joinpath(s.output_dir, Path(parameter_filepath_m_nan_n4).stem + "_c.nc4")
 
-    # parameter_interpolated_clipped =  xr.open_dataset(parameter_filepath_m_nan_n4) * landsea_mask
-    # parameter_interpolated_clipped.to_netcdf(parameter_filepath_m_nan_n4_clipped, format="NETCDF4")
-    # parameter_interpolated_clipped.close()
-    
     print(f"Generated interpolated parameters, stored in {parameter_filepath_m_nan_n4_clipped}")
 
-    cmd = "cdo -mul " + str(landsea_mask_filepath) + " " + str(parameter_filepath_m_nan_n4) + " " + str(parameter_filepath_m_nan_n4_clipped) 
-
-    try:
-        print(cmd)
-        subprocess.check_call(cmd, shell=True)
-    except subprocess.CalledProcessError:
-        cmd = "module load cdo && " + cmd
-        print(cmd)
-        subprocess.check_call(cmd, shell=True)
+    landsea_mask["mask"][0, :, :] = landsea_mask["mask"][0, :, :].transpose("lat", "lon") # reorder dimensions equal to shape of parameter file
+    parameter_m_nan_n4_clipped = parameter_m_nan_n4 * landsea_mask["mask"][0, :, :]
+    parameter_m_nan_n4_clipped.to_netcdf(parameter_filepath_m_nan_n4_clipped, format="NETCDF4")
+    parameter_m_nan_n4_clipped.close()
+    
+    # cmd = "cdo -mul " + str(landsea_mask_filepath) + " " + str(parameter_filepath_m_nan_n4) + " " + str(parameter_filepath_m_nan_n4_clipped) 
+    # try:
+        # print(cmd)
+        # subprocess.check_call(cmd, shell=True)
+    # except subprocess.CalledProcessError:
+        # cmd = "module load cdo && " + cmd
+        # print(cmd)
+        # subprocess.check_call(cmd, shell=True)
 
 
     # if remove_intermediate_files == True:
@@ -95,7 +105,7 @@ def interpolation_parameters(parameter_filepath, landsea_mask_filepath):
         # os.remove(parameter_filepath_nan_m)
         # os.remove(parameter_filepath_nan_m_nan)
         
-    return parameter_filepath_m_nan_n4_clipped
+    return parameter_m_nan_n4_clipped
 
 
 
