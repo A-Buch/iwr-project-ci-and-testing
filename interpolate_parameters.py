@@ -33,13 +33,15 @@ nct = obs_data.variables["time"]
 lats = obs_data.variables["lat"][:]
 lons = obs_data.variables["lon"][:]
 
-parameter_filepath = s.output_dir / s.trace_file
-if not os.path.exists(parameter_filepath):
-    out = nc.Dataset(parameter_filepath, "w", format="NETCDF4") 
-    pp.form_global_nc(out, nct[:8], lats, lons, None, nct.units)
-    out.close()
+# parameter_filepath = s.output_dir / s.trace_file
+# if not os.path.exists(parameter_filepath):
+    # out = nc.Dataset(parameter_filepath, "w", format="NETCDF4") 
+    # pp.form_global_nc(out, nct[:8], lats, lons, None, nct.units)
+    # out.close()
 
-parameter_file = nc.Dataset(parameter_filepath, "a", format="NETCDF4") 
+# parameter_file = nc.Dataset(parameter_filepath, "a", format="NETCDF4") 
+# parameter_file = xr.open_dataset(parameter_filepath) 
+
 
 ### check which data is available
 data_list = []
@@ -70,7 +72,6 @@ if s.lateral_sub == 1 :
 
 for (i, j, dfpath) in it.zip_longest(lat_indices, lon_indices, data_list):
 #for outdir_for_cell in data_list:
-    print(dfpath)
 #    try:
     print("Writing parameters  from trace files to parameter file.")
     with open(dfpath, 'rb') as handle:
@@ -79,17 +80,30 @@ for (i, j, dfpath) in it.zip_longest(lat_indices, lon_indices, data_list):
     # write the values of each parameter as single layers to nc file, i.e. one parameter can contain 1 to n layers
     param_names = list(free_params.keys())
 
+    parameter_filepath = s.output_dir / s.trace_file
+    if not os.path.exists(parameter_filepath):
+        out = nc.Dataset(parameter_filepath, "w", format="NETCDF4") 
+        pp.form_global_nc(out, nct[:8], lats, lons, param_names, nct.units)
+        out.close()
+    parameter_file = nc.Dataset(parameter_filepath, "a", format="NETCDF4") 
+    #parameter_file = xr.open_dataset(parameter_filepath) 
+    print(parameter_file)
+
     for param_name in param_names:
         values_per_parameter = np.atleast_1d(np.array(free_params[param_name])) # forcing 0-D arrays to 1-D
-        ## ## create empty variable in netcdf if not exists
+        # ## create empty variable in netcdf if not exists
         if param_name in parameter_file.variables.keys():
             pass
         else:
+            #parameter_file.variables[param_name][ :, int(i), int(j)] = (('time', 'lat', 'lon'), values_per_parameter) 
+            # parameter_file.variables[param_name][ :, int(i), int(j)] = xr.Dataset({'parameter_file': parameter_file.variables[param_name][ :, int(i), int(j)], f'{param_name}': (('time', 'lat', 'lon'), values_per_parameter)})
             parameter_file.createVariable(param_name, "f4", ("time", "lat", "lon"), chunksizes=(nct[:8].shape[0], 1, 1), fill_value=1e20) 
-        parameter_file.variables[param_name][ :, int(i), int(j)] = values_per_parameter
-        #for n in range(len(values_per_parameter)):
-            #out.variables[param_name][ n, int(lat_idx), int(lon_idx)] = values_per_parameter[n] #np.array(values_per_parameter[n])
+        parameter_file.variables[param_name][ :, int(i), int(j)] = values_per_parameter  ## file opened with NETCDF4 package
+        # for n in range(len(values_per_parameter)):  ## file opened with xarray
+        #    parameter_file.variables[param_name][ n, int(i), int(j)] = values_per_parameter[n] #np.array(values_per_parameter[n])
+           #     parameter_file.variables[param_name][ n, int(i), int(j)] = parameter_file.assign(f"{param_name}"= values_per_parameter[n])
     print(f"wrote all {len(param_names)} to cell position",  int(i), int(j))
+print(parameter_file)
 
 parameter_file.close()
 
@@ -155,7 +169,9 @@ parameter_m_nan_n4 = xr.open_dataset(parameter_filepath_m_nan_n4)
 parameter_filepath_m_nan_n4_clipped = Path.joinpath(s.output_dir, Path(parameter_filepath_m_nan_n4).stem + "_c.nc4")
 
 ## TODO: workaround to fix representation in python while dimensions of parameter file are the same as in landsea_mask
-parameter_m_nan_n4_clipped = parameter_m_nan_n4 * np.array(landsea_mask["mask"][0, :, :].reindex(lat=landsea_mask.lat[::-1])) # landseamask.lat is flipped in relation to parameter file
+#parameter_m_nan_n4_clipped = parameter_m_nan_n4 * np.array(landsea_mask["mask"][0, :, :]).reindex(lat=landsea_mask.lat[::-1])) # landseamask.lat is flipped in relation to parameter file
+parameter_m_nan_n4_clipped = parameter_m_nan_n4 * landsea_mask["mask"][0, :, :]
+
 parameter_m_nan_n4_clipped.to_netcdf(parameter_filepath_m_nan_n4_clipped, format="NETCDF4")
 print(f"Generated interpolated parameters, stored in {parameter_filepath_m_nan_n4_clipped}")
 parameter_m_nan_n4_clipped.close()
