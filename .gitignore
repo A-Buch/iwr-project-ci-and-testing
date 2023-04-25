@@ -1,5 +1,6 @@
 joblib_memmap/
 notebooks/
+jupyter_notebooks/test_output
 .ipynb_checkpoints/
 __pycache__/
 output/
@@ -10,7 +11,6 @@ submit.sh
 submit_array.sh
 log/
 backup/
-*.ipynb
 submit_cfact.sh
 .idea/
 myrunscripts/
