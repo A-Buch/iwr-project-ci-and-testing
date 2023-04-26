@@ -38,7 +38,7 @@ timeout = 60 * 60
 
 
 # tas, tasrange pr, prsn, prsnratio, ps, rlds, wind, hurs
-variable = "tas" #"pr6"  # select variable to detrend
+variable = "tas"  # select variable to detrend
 
 
 # number of modes for fourier series of model
@@ -62,21 +62,22 @@ lateral_sub = 1
 #lateral_sub = 40
 
 # define shape of testarea, should be in shae of (n*3)+1
-file_len = 31  # 16
+file_len = 31
+
 
 ## nc.file storing free parameters 
-trace_file = f"{variable}_freeparameters_31_nolmask.nc4"
-#trace_file = f"{variable}_parameters_16_v2_0.nc4" 
-#f"{variable}12_parameters_31.nc4"
+trace_file = f"{variable}_freeparameters_31_coast_latsorted.nc4"
+interpolated_trace_file = "tas_freeparameters_31_coast_latsorted_m_nan_n4_c.nc4"
+
+bmask_file = "b_mask_31.nc"
 
 
 gmt_file = dataset.lower() + "_ssa_gmt.nc4"
-#landsea_file = "landmask_for_testing_16.nc" 
-landsea_file = "landseamask_31_setmissval.nc" #full" + ".nc"
-source_file = variable + "12_" + dataset.lower() + "_1950_2020_00023_ba_ncpdq_merged_31.nc4" 
-#source_file = variable + "_" + dataset.lower() + "_merged_crop_16" + ".nc4"
-#cfact_file = variable  + "_cfactual_shape31_interpolated_v2.nc4"  #16_v2_0.nc4"
-cfact_file = variable  + "_cfactual_freeparameters_31_interp_nolmask.nc4"  #16_v2_0.nc4"
+
+landsea_file = "landseamask_31_smv.nc" #"landseamask_31_setmissval.nc" #full" + ".nc"
+source_file = variable + "12_" + dataset.lower() + "_1950_2020_00023_ba_n_srt_c_merged_d.nc4"
+cfact_file = variable  + "_cfactual_freeparameters_31_coast_org.nc4"  #16_v2_0.nc4"
+#cfact_file = variable  + "_cfactual_freeparameters_31_coast_interp.nc4"  #16_v2_0.nc4"
 
 
 # .h5 or .csv
