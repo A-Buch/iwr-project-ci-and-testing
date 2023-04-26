@@ -26,6 +26,7 @@ def merge_parameters(trace_dir, parameter_filepath):
     which is stored in parameter_filepath"""
     parameter_files = []
     for trace_file in trace_dir.glob("**/lon*"):
+        print("trace_file", trace_file)
         lat = get_float_from_string(trace_file.parent.name)
         lon = get_float_from_string(trace_file.name)
         data_vars = []
@@ -55,11 +56,12 @@ def merge_parameters(trace_dir, parameter_filepath):
         parameter_files.append(xr.merge(data_vars))
 
     merged_parameters = xr.merge(parameter_files)
+    merged_parameters = merged_parameters.reindex(lat=merged_parameters.lat[::-1])  # curr. workaround: correction of upside-down
     merged_parameters.to_netcdf(parameter_filepath, format="NETCDF4")
     return merge_parameters
 
 
-def reduce_parameters(parameter_file, bmask, parameter_filepath_m, support_filepath):
+def reduce_parameters(parameter_file, bmask, parameter_filepath_m, support_filepath, support_gridded_filepath):
     """
     Use a (binary) mask file to reduce the number of parameters. This function is only for testing.
     In production we want to only compute parameters for the support cells
@@ -97,13 +99,30 @@ def reduce_parameters(parameter_file, bmask, parameter_filepath_m, support_filep
         subprocess.check_call(cmd, shell=True)
 
 
-def interpolate_parameters(support_filepath, interpolated_parameter_filepath):
+    ## convert to lonlat grid, needed for interpolation step
+    print("convert grid of support file to lonlat, which is needed for interpolation step")
+    cmd = (
+        "cdo griddes " + str(support_filepath) +  " > params_grid "
+            + '&& sed -i "s/generic/lonlat/g" params_grid '
+            + "&& cdo setgrid,params_grid " + str(support_filepath) + " " + str(support_gridded_filepath)
+    )
+    try:
+        print(cmd)
+        subprocess.check_call(cmd, shell=True)
+    except subprocess.CalledProcessError:
+        cmd = "module load cdo && " + cmd
+        print(cmd)
+        subprocess.check_call(cmd, shell=True)
+ 
+
+
+def interpolate_parameters(support_gridded_filepath, interpolated_parameter_filepath):
     """interpolate missing values in paramters file"""
     print("interpolating..")
     ## [setmisstodis, neighbors]: distance-weighted average of the nearest non missing values
     cmd = (
         "cdo -setmisstodis,4 "
-        + str(support_filepath)
+        + str(support_gridded_filepath)
         + " "
         + str(interpolated_parameter_filepath)
     )
@@ -115,6 +134,15 @@ def interpolate_parameters(support_filepath, interpolated_parameter_filepath):
         cmd = "module load cdo && " + cmd
         print(cmd)
         subprocess.check_call(cmd, shell=True)
+
+    ## extract land area from interpolated file
+    interpolated_parameters = xr.load_dataset(interpolated_parameter_filepath)
+    lsmask_filepath = s.input_dir / s.dataset / s.testarea / s.landsea_file
+    lsmask = xr.load_dataset(lsmask_filepath)
+    
+    lsmask = lsmask.assign_coords(lat=interpolated_parameters.lat,lon=interpolated_parameters.lon) # curr. workaround: align dims of both files for interpolation
+    interpolated_parameters = interpolated_parameters * lsmask["mask"][0,:,:]
+    interpolated_parameters.to_netcdf(interpolated_parameter_filepath, format="NETCDF4", mode='w')
 
     print(
         f"Generated interpolated parameters, stored in {interpolated_parameter_filepath}"
@@ -133,17 +161,22 @@ def main():
     bmask = xr.load_dataset(bmask_filepath)
     print("binary mask:\n", bmask)
 
-    parameter_filepath_m = Path.joinpath(s.output_dir, s.trace_file.stem + "_m.nc4")
+    parameter_filepath_m = Path.joinpath(s.output_dir, Path(s.trace_file).stem + "_m.nc4")
     support_filepath = Path.joinpath(
         s.output_dir, Path(parameter_filepath_m).stem + "_nan.nc4"
     )
-
-    reduce_parameters(parameter_file, bmask, parameter_filepath_m, support_filepath)
-
-    interpolated_parameter_filepath = Path.joinpath(
-        s.output_dir, Path(support_filepath).stem + "_n4.nc4"
+    support_gridded_filepath = Path.joinpath(
+        s.output_dir, Path(support_filepath).stem + "_g.nc4"
     )
-    interpolate_parameters(support_filepath, interpolated_parameter_filepath)
+    parameter_filepath = s.output_dir / s.trace_file
+    parameter_file = xr.load_dataset(parameter_filepath)
+
+    reduce_parameters(parameter_file, bmask, parameter_filepath_m, support_filepath, support_gridded_filepath)
+
+    interpolate_parameters(
+        support_gridded_filepath, 
+        interpolated_parameter_filepath=s.output_dir/s.interpolated_trace_file
+     )
 
 
 if __name__ == "__main__":
