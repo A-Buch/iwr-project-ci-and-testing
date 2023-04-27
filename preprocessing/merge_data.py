@@ -1,3 +1,7 @@
+"""
+The script reorders the dimensions, converts the hourly timestamp to daily (needed for subsequent steps), 
+creates a subset for the interpolation test and joins the single timesteps (here 1950-1990, 1990-2020) into one file
+"""
 import os
 import glob
 import subprocess
@@ -38,14 +42,14 @@ for variable in variable_list:
             output_file_ncpdq = output_dir / Path(variable + time_hour + "_" + s.dataset.lower() + "_" + timespane + "_" + tile + "_ba_n_tmp.nc4")
             timeunit_year = timespane.split('_')[0]
 
-            ## set all facts to same dimension order
+            ## set all factual datasets to same dimension order
             cmd = (
                 "module load nco && ncpdq -4 -a time,lon,lat " + meteo_file + " " + str(output_file_ncpdq)
             )
             print(cmd)
             subprocess.check_call(cmd, shell=True)
 
-            ## repair time unit from hour to daily
+            ## set time unit from hour to daily
             output_file_setreftime = output_dir / Path(variable + time_hour + "_" + s.dataset.lower() + "_" + timespane + "_" + tile + "_ba_n_srt_tmp.nc4")
             cmd = (
                 f"module load cdo && cdo -setreftime,{timeunit_year}-01-01,{time_hour}:00:00,1day "
@@ -56,7 +60,7 @@ for variable in variable_list:
             print(cmd)
             subprocess.check_call(cmd, shell=True)
 
-            ## Interpolation test subset: crop to spatial subset to nth x nth cells
+            ## Create subset for testing interpolation method
             meteo = xr.load_dataset(output_file_setreftime)
             meteo_clipped_file = str(output_dir) + "/" + variable + time_hour + "_" + s.dataset.lower() + "_" + timespane + "_" + tile + "_ba_n_srt_c_tmp.nc4"
             print(meteo) 
@@ -67,14 +71,14 @@ for variable in variable_list:
             print("clipping by spatial index - done")
 
 
-        # merge separated nc files by variable to one merged nc file
+        # merge multiple nc files by variable to into one large nc file
         output_file_mergetime = output_dir / Path(variable + time_hour + "_" + s.dataset.lower() + "_" + "1950_2020" + "_" + tile +"_ba_n_srt_c_merged_tmp.nc4")
         print(f"\nwriting to {output_file_mergetime}:") 
         cmd = (
             "module load cdo && cdo mergetime " 
             + str(output_dir) + "/" + variable + time_hour + "_" + s.dataset.lower() 
             + "_????_????_"
-            + tile + "_ba_n_srt_c.nc4"
+            + tile + "_ba_n_srt_c_tmp.nc4"
             + " "
             + str(output_file_mergetime)
         )
