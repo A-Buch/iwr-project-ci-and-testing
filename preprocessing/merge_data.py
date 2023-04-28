@@ -98,6 +98,6 @@ for variable in variable_list:
 
 
 if remove_intermediate_files == True:
-    for tmp_files in glob.iglob(os.path.join(dir, '*_tmp.*')):
+    for tmp_files in glob.iglob(os.path.join(output_base, '*_tmp.nc*')):
         os.remove(tmp_files)
     print(f"Removing temporary files")
