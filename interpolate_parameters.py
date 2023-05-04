@@ -12,6 +12,7 @@ from scipy.ndimage import minimum_filter
 
 import settings as s
 
+
 remove_intermediate_files = True
 
 
@@ -59,10 +60,10 @@ def merge_parameters(trace_dir, parameter_filepath):
 
     merged_parameters = xr.merge(parameter_files)
     merged_parameters.to_netcdf(parameter_filepath, format="NETCDF4")
-    return merge_parameters
+   # return merge_parameters  # troubles in return as xarray Dataset
 
 
-def reduce_parameters(parameter_file, bmask, parameter_filepath_m, support_filepath, support_gridded_filepath):
+def reduce_parameters(parameter_filepath, bmask_filepath, parameter_filepath_m, support_filepath, support_gridded_filepath):
     """
     Use a (binary) mask file to reduce the number of parameters. This function is only for testing.
     In production we want to only compute parameters for the support cells
@@ -71,16 +72,21 @@ def reduce_parameters(parameter_file, bmask, parameter_filepath_m, support_filep
     This function should be used if the effects of interpolation are evaluated
     against computing parameters for all files
     """
-    parameter_file_m = parameter_file * bmask.binary_mask[0, :, :]
+    parameter_file = xr.load_dataset(parameter_filepath)
+    bmask = xr.load_dataset(bmask_filepath)
 
+    ## only keep every nth parameter value as support cell
+    parameter_file_m = parameter_file * bmask.binary_mask[:, :]
+
+    ##  make also cells from coastline as support cells
     coastmask = parameter_file.notnull()
     coastmask = minimum_filter(
         coastmask.weights_fc_trend, size=(0, 3, 3), mode="nearest"
     )
-    coastlines = parameter_file.where(~coastmask)  # extract coast lines
+    coastlines = parameter_file.where(~coastmask) 
     parameter_file_m = parameter_file_m.merge(
         coastlines, join="outer", compat="no_conflicts"
-    )  ###  every 3rd cell + cells from coastline are support cells
+    )
 
     parameter_file_m.to_netcdf(parameter_filepath_m, format="NETCDF4")
     parameter_file_m.close()
@@ -116,7 +122,7 @@ def reduce_parameters(parameter_file, bmask, parameter_filepath_m, support_filep
 
 
 
-def interpolate_parameters(support_gridded_filepath, interpolated_parameter_filepath, extract_land=True, lsmask_filepath):
+def interpolate_parameters(support_gridded_filepath, interpolated_parameter_filepath, lsmask_filepath, extract_land=True):
     """interpolate missing values in paramters file"""
     print("interpolating..")
     ## [setmisstodis, neighbors]: distance-weighted average of the nearest non missing values
@@ -139,8 +145,9 @@ def interpolate_parameters(support_gridded_filepath, interpolated_parameter_file
     if extract_land:
         interpolated_parameters = xr.load_dataset(interpolated_parameter_filepath)
         lsmask = xr.load_dataset(lsmask_filepath)
-        lsmask = lsmask.assign_coords(lat=interpolated_parameters.lat, lon=interpolated_parameters.lon) # align dims of both files for interpolation
-        interpolated_parameters = interpolated_parameters * lsmask["mask"][0,:,:]
+        #lsmask = lsmask.assign_coords(lat=interpolated_parameters.lat, lon=interpolated_parameters.lon) # align dims of both files for interpolation
+        lsmask = lsmask.reindex(lat=lsmask.lat[::-1])  # fix improper lat-dimensions between lsmask and interpolated_parameters
+        interpolated_parameters = interpolated_parameters * np.array(lsmask["mask"][:,:])
         interpolated_parameters.to_netcdf(interpolated_parameter_filepath, format="NETCDF4", mode='w')
 
     print(
@@ -150,20 +157,10 @@ def interpolate_parameters(support_gridded_filepath, interpolated_parameter_file
 
 def main():
     """All steps from single parameter files for each grid cell to a interpolated parameter file"""
-    parameter_file = merge_parameters(
-        trace_dir=s.output_dir / "traces" / s.variable,
-        parameter_filepath=s.output_dir / s.trace_file,
-    )
-    try:
-        print("merged_file", xr.Dataset(parameter_file))
-    except:
-        print("tried to modify func merge_params to xr")
-        pass
-    ## load binary mask
-    bmask_filepath = s.input_dir / s.dataset / s.testarea / s.bmask_file
-    bmask = xr.load_dataset(bmask_filepath)
-    print("binary mask:\n", bmask)
 
+    ## set paths
+    trace_dir = s.output_dir / "traces" / s.variable
+    parameter_filepath = s.output_dir / s.trace_file
     parameter_filepath_m = Path.joinpath(s.output_dir, Path(s.trace_file).stem + "_m_tmp.nc4")
     support_filepath = Path.joinpath(
         s.output_dir, Path(parameter_filepath_m).stem + "_nan_tmp.nc4"
@@ -171,15 +168,30 @@ def main():
     support_gridded_filepath = Path.joinpath(
         s.output_dir, Path(support_filepath).stem + "_g_tmp.nc4"
     )
-    parameter_filepath = s.output_dir / s.trace_file
-    parameter_file = xr.load_dataset(parameter_filepath)
+    interpolated_parameter_filepath = s.output_dir/s.interpolated_trace_file
 
-    reduce_parameters(parameter_file, bmask, parameter_filepath_m, support_filepath, support_gridded_filepath)
+    bmask_filepath = s.input_dir / s.dataset / s.testarea / s.bmask_file
+    lsmask_filepath = s.input_dir / s.dataset / s.testarea / s.landsea_file
+
+    ## apply function
+    merge_parameters(
+        trace_dir,
+        parameter_filepath
+    )
+
+    reduce_parameters(
+        parameter_filepath, 
+        bmask_filepath, 
+        parameter_filepath_m, 
+        support_filepath, 
+        support_gridded_filepath
+    )
 
     interpolate_parameters(
         support_gridded_filepath, 
-        interpolated_parameter_filepath=s.output_dir/s.interpolated_trace_file,
-        lsmask_filepath = s.input_dir / s.dataset / s.testarea / s.landsea_file
+        interpolated_parameter_filepath,
+        lsmask_filepath,
+        extract_land=True
      )
 
     if remove_intermediate_files == True:

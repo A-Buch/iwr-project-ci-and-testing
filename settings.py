@@ -24,21 +24,20 @@ elif user == "annabu":
     data_dir = "/p/tmp/annabu/attrici_interpolation"
     log_dir = "./log"
 
-## for interpolation test
+## only for interpolation test
 testarea = "testarea_31"
 
 input_dir = Path(data_dir) / "meteo_data" 
-#input_dir = Path(data_dir) / "test_input"
 
 # make output dir same as cwd. Helps if running more than one job.
-output_dir = Path(data_dir) / "output_corr" / testarea #/ Path.cwd().name
+output_dir = Path(data_dir) / "output_corr" / testarea
 
 # max time in sec for sampler for a single grid cell.
 timeout = 60 * 60
 
 
 # tas, tasrange pr, prsn, prsnratio, ps, rlds, wind, hurs
-variable = "tas"  # select variable to detrend
+variable = "tas" #"pr6"  # select variable to detrend
 
 
 # number of modes for fourier series of model
@@ -61,23 +60,20 @@ dataset ="ERA5"  # for EFAS-project
 lateral_sub = 1
 #lateral_sub = 40
 
-# define shape of testarea, should be in shae of (n*3)+1
-file_len = 31
+# define shape of testarea, should be in shape of (n*3)+1
+file_len = 31  # 16
 
 
 ## nc.file storing free parameters 
-trace_file = f"{variable}_freeparameters_31_coast_latsorted.nc4"
-interpolated_trace_file = "tas_freeparameters_31_coast_latsorted_m_nan_n4_c.nc4"
-
+trace_file = f"{variable}_parameters_31.nc4"
+interpolated_trace_file = "tas_parameters_interpolated_31.nc4"
 bmask_file = "b_mask_31.nc"
 
-
 gmt_file = dataset.lower() + "_ssa_gmt.nc4"
-
-landsea_file = "landseamask_31_smv.nc" #"landseamask_31_setmissval.nc" #full" + ".nc"
-source_file = variable + "12_" + dataset.lower() + "_1950_2020_00023_ba_n_srt_c_merged_d.nc4"
-cfact_file = variable  + "_cfactual_freeparameters_31_coast_org.nc4"  #16_v2_0.nc4"
-#cfact_file = variable  + "_cfactual_freeparameters_31_coast_interp.nc4"  #16_v2_0.nc4"
+landsea_file = "landseamask_31.nc"
+source_file = variable + "12_" + dataset.lower() + "_1950_2020_00023_ba_preprocessed.nc4"
+org_cfact_file = variable  + "_cfactual_org.nc4" 
+interpolated_cfact_file = variable  + "_cfactual_interp.nc4" 
 
 
 # .h5 or .csv
