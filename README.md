@@ -3,24 +3,42 @@
 
 Code implementing the methods described in the paper `ATTRICI 1.1 - counterfactual climate for impact attribution` in Geoscientific Model Development. The code is archived at [ZENODO](https://doi.org/10.5281/zenodo.3828914).
 
-
 *Note*: Example input file (already merged) located in PIK cloud within a shared folder called *ERA5_example_input*
 
+In this branch an interpolation approach is tested. 
+The aim is to increase the perfomrance of the current toolbox by only calculating a subset of the cells for an AOI, remaining cells will be interpolated. 
+For this the bias between original and interpolated counterfactual is evaluated inside ```overview.ipynb```
 
-### Write out parameters to file 
-Run files located in scripts_writeParameters with submit.sh, i.e. with example input data
-Uncomment within submit.sh:
-`python -u ./scripts/run_estimation.py &`
+
+Adapt your paths and file names in the following scripts and in ```settings.py```:
+
+#### Align factual input file
+Joins timesteps, align dimesnions into one file and creates a subset of the AOI
+`python -u ./merge_data.py &`
+
+#### Create landseamask and binary mask
+Creates a land(sea)mask based on the factual input dataset. 
+The binary mask is only needed for testing the interpolation
+`python -u ./create_masks.py &`
+
+#### Write out trace files
+Write out trace file containing parameter values on which the counterfactual variable is based on. 
+One trace file is created for each cell of the AOI. 
+`python -u ./run_estimation_write.py &`
 
 #### Interpolate parameters
-Run interpolation script with submit.sh. Uncomment within submit.sh:
-`python -u ./scripts/mask_interpolated_parameterfile.py &`
+Interpolate parameters. The script loads the parameters stored in the trace files, writes them to a netCDF file and interpolates them. 
+The script contains functions which are currently used for testing the interpolation approach, they will be removed later.  
+`python -u ./interpolate_parameters.py &`
 
-### Load parameters and write to timeseries files
-Run files located in scripts_loadParameters with submit.sh
-Uncomment within submit.sh:
-`python -u ./scripts/run_estimation.py &`
+#### Load parameters and write to timeseries files
+Load the interpolated parameters to timeseries files for each cell of the AOI.
+Only a single process is needed - set in the batch script `#SBATCH --array=1`
+`python -u ./run_estimation_load.py &`
 
+#### Create counterfactual dataset
+Based on the timeseries files a netCDF4 file containing the counterfactual values is created
+`python -u ./merge_cfact.py &`
 
 
 ## Example for SLURM job script:
@@ -74,8 +92,13 @@ cp /home/<username>/theanorc ./theanorc
 
 # activate conda env and generate counterfactual climate data
 source activate <env_name>
-python -u ./scripts/run_estimation.py
-python -u ./scripts/merge_cfact.py &
+
+#### Uncomment the script you need #####
+#python -u ./create_masks.py &
+#python -u ./run_estimation_write.py &
+#python -u ./run_estimation_load.py &
+
+
 wait
 cleanup
 
