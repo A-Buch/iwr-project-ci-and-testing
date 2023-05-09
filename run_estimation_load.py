@@ -55,7 +55,6 @@ ncg.close()
 
 input_file = s.input_dir / s.dataset / s.testarea / s.source_file.lower()
 landsea_mask_file = s.input_dir /  s.dataset / s.testarea / s.landsea_file
-
 obs_data = nc.Dataset(input_file, "r")
 nc_lsmask = nc.Dataset(landsea_mask_file, "r")
 nct = obs_data.variables["time"]
@@ -64,13 +63,21 @@ lons = obs_data.variables["lon"][:]
 longrid, latgrid = np.meshgrid(lons, lats)
 jgrid, igrid = np.meshgrid(np.arange(len(lons)), np.arange(len(lats)))
 
-ls_mask = nc_lsmask.variables["mask"][0, :, :]# ["area_European_01min"][:,:]# 
+ls_mask = nc_lsmask["mask"][:, :]# ["area_European_01min"][:,:]# 
 
 df_specs = pd.DataFrame()
 df_specs["lat"] = latgrid[ls_mask == 1]
 df_specs["lon"] = longrid[ls_mask == 1]
 df_specs["index_lat"] = igrid[ls_mask == 1]
 df_specs["index_lon"] = jgrid[ls_mask == 1]
+
+print(df_specs.head())
+
+#df_specs["lat"] = df_specs["lat"].values[::-1]#.loc[0,:]
+#df_specs["index_lat"] = df_specs["index_lat"].values[::-1]#.loc[0,:]
+print(df_specs.head())
+#print(df_specs.tail())
+
 
 print("A total of", len(df_specs), "grid cells to estimate.")
 
@@ -107,6 +114,7 @@ else:
 interpolated_trace_filepath = s.output_dir / s.interpolated_trace_file
 parameter_f = xr.open_dataset(interpolated_trace_filepath)
 
+parameter_f = parameter_f.reindex(lat=parameter_f.lat[::-1])
 
 estimator = est.estimator(s)
 
@@ -134,7 +142,7 @@ for n in run_numbers[:]:
             print(e)
             print("No valid data found. Run calculation.")
 
-    data = obs_data.variables[s.variable][:, sp["index_lat"], sp["index_lon"]]
+    data = obs_data[s.variable][:, sp["index_lat"], sp["index_lon"]]
     df, datamin, scale = dh.create_dataframe(nct[:], nct.units, data, gmt, s.variable)
 
     try:

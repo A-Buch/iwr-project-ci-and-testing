@@ -1,5 +1,4 @@
 import os
-import os
 import glob
 import numpy as np
 import netCDF4 as nc
@@ -53,8 +52,9 @@ ncg = nc.Dataset(gmt_file, "r")
 gmt = np.squeeze(ncg.variables["tas"][:])
 ncg.close()
 
-input_file = s.input_dir / s.dataset / s.testarea / s.source_file.lower()
+input_file = s.input_dir / s.dataset / s.testarea / s.source_file
 landsea_mask_file = s.input_dir /  s.dataset / s.testarea / s.landsea_file
+print(input_file)
 
 obs_data = nc.Dataset(input_file, "r")
 nc_lsmask = nc.Dataset(landsea_mask_file, "r")
@@ -64,7 +64,7 @@ lons = obs_data.variables["lon"][:]
 longrid, latgrid = np.meshgrid(lons, lats)
 jgrid, igrid = np.meshgrid(np.arange(len(lons)), np.arange(len(lats)))
 
-ls_mask = nc_lsmask.variables["mask"][0, :, :]# ["area_European_01min"][:,:]# 
+ls_mask = nc_lsmask.variables["mask"][:,:] #["area_European_01min"][:,:]# 
 
 df_specs = pd.DataFrame()
 df_specs["lat"] = latgrid[ls_mask == 1]
