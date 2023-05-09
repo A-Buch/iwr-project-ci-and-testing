@@ -67,9 +67,9 @@ module load compiler/gnu/7.3.0
 module load git
 module load anaconda/5.0.0_py3
 
-export CXX=g++
 
-# set tmp_dir and comiledir which are needed for theano package
+# set tmp_dir and compiledir which are needed for theano package
+export CXX=g++
 tmpdir=/p/tmp/<username>/theano/theano_${SLURM_ARRAY_TASK_ID}.tmp
 mkdir -p $tmpdir
 export TMPDIR=$tmpdir
@@ -77,6 +77,17 @@ export TMPDIR=$tmpdir
 compiledir=/p/tmp/<username>/theano/$SLURM_ARRAY_TASK_ID
 mkdir -p $compiledir
 export THEANO_FLAGS=base_compiledir=$compiledir
+
+# settings for multiprocessing
+unset I_MPI_DAPL_UD
+unset I_MPI_DAPL_UD_PROVIDER
+export I_MPI_PMI_LIBRARY=/p/system/slurm/lib/libpmi.so
+
+# if you're using OpenMP for threading
+export OMP_PROC_BIND=true # make sure our threads stick to cores
+export OMP_NUM_THREADS=8  # see: intern Custer User Guide documentation.com, matches how many cpus-per-task we asked for
+export SUBMITTED=1
+
 
 # define garbage collector for cleaning up after python script execution as also in case jobs are aborted
 cleanup() {

@@ -10,7 +10,7 @@ import xarray as xr
 import settings as s
 
 
-remove_intermediate_files = True
+remove_intermediate_files = False
 
 variable_list = ["tas"]
 #variable_list = ["hurs", "tas", "pr6", "rg", "tasrange", "tasskew", "ws"]
@@ -44,7 +44,7 @@ for variable in variable_list:
             if not os.path.exists(output_file_ncpdq):
                 ## set all factual datasets to same dimension order
                 cmd = (
-                    "module load nco && ncpdq -4 -a time,lon,lat " + meteo_file + " " + str(output_file_ncpdq)
+                        "module load nco && ncpdq -4 -a time,lat,lon " + meteo_file + " " + str(output_file_ncpdq)
                 )
                 print(cmd)
                 subprocess.check_call(cmd, shell=True)
@@ -88,18 +88,6 @@ for variable in variable_list:
             )
             print(cmd)
             subprocess.check_call(cmd, shell=True)
-
-        ## reorder dimensions of fact file
-        meteo = xr.load_dataset(output_file_mergetime)
-        meteo_dim_file = str(output_dir) + "/" + variable + time_hour + "_" + s.dataset.lower() + "_" + "1950_2020" + "_" + tile + "_ba_preprocessed.nc4"
-        print(meteo) 
-        meteo_dim = meteo
-        meteo_dim["tas"] = meteo_dim["tas"].transpose("time", "lat", "lon")
-        print(meteo_dim)
-        meteo_dim.to_netcdf(meteo_dim_file, format="NETCDF4")
-        meteo_dim.close()
-        print("clipping by spatial index - done")
-
 
 
 if remove_intermediate_files == True:
