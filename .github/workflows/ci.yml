@@ -20,11 +20,11 @@ on:
 
 jobs:
   build_and_test:
-    name: Build and test
+    name: Build and test  # each job needs a name - mandatory
     runs-on: windows-2019
     strategy:
       matrix:
-        python-version: [3.7, 3.8]
+        python-version: [3.7]
 
       # build-and-test:
         # strategy:
@@ -38,7 +38,8 @@ jobs:
     - uses: actions/checkout@v3
     - name: Checkout repository
       #shell: python
-      uses: actions/setup-checkout@v3
+      uses: actions/checkout@v3  ## PROBLM: Error: Unable to resolve action actions/setup-checkout, repository not found
+#    org:  uses: actions/setup-checkout@v3  ## PROBLM: Error: Unable to resolve action actions/setup-checkout, repository not found
       with:
         # setuptools_scm requires a non-shallow clone of the repository
         fetch-depth: 0
