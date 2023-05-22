@@ -23,7 +23,7 @@ on: push
 #  ubuntu-latest 
 
 jobs:
-    build-and-test:
+    build_and_test:
         runs-on: windows-2019
         strategy:
             matrix:
