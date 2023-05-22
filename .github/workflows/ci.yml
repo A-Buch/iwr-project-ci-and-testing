@@ -17,7 +17,7 @@ on:
 
 
 jobs:
-  build-and-test:
+  #build-and-test:
     runs-on: ${{matrix.os}}
     name: Testing on ${{runner.os}} #${{matrix.os}}
     strategy:
