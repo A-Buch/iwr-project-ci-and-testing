@@ -19,11 +19,11 @@ name: CI
 on: [push]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest  # windows-2019
-    strategy:
-      matrix:
-        python-version: ["3.7", "3.8"]
+    build:
+        runs-on: ubuntu-latest  # windows-2019
+        strategy:
+            matrix:
+                python-version: ["3.7", "3.8"]
 
   # build-and-test:
     # strategy:
