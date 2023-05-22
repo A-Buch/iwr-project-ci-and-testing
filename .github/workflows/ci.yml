@@ -79,8 +79,11 @@ jobs:
     - name: Install Python packages
       run: |
         python -m conda install -r requirements-dev.txt
-        if ( -f ./config/environment.yml ); then conda install -r ./config/environment.yml; fi
+        python -m conda install -r ./config/environment.yml
         python -m pip install .[tests]
+      # TODO if [ -f ./config/environment.yml ]; then conda install -r ./config/environment.yml; fi
+      # python -m pip install .[tests]
+
     # pip install -e .
     # pip install flake8  
     # flake8 = # for code formating
