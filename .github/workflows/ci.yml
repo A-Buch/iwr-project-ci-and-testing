@@ -20,7 +20,7 @@ on: [push]
 
 jobs:
   build:
-    runs-on: windows-2019 #ubuntu-latest
+    runs-on: ubuntu-latest  # windows-2019
     strategy:
       matrix:
         python-version: ["3.7", "3.8"]
