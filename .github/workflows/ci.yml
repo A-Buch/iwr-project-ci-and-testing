@@ -1,33 +1,30 @@
 name: Build and Testing
 
-# on:
-  # # We run CI on pushes to the develop branch
-  # push:
-    # branches:
-      # - develop
-  # # and on all pull requests to the main branch
-  # pull_request:
-    # branches:
-      # - develop
-  # # as well as upon manual triggers through the 'Actions' tab of the Github UI
-  # #workflow_dispatch:
-    # # periodical run
-    # # schedule:
-        # # - cron: "0 5 * * 1" # 5.00 am, every day, weekday So-Sa, Monday
+on:
+  # We run CI on pushes to the develop branch
+  push:
+    branches:
+    - develop
+  # and on all pull requests to the main branch
+  pull_request:
+    branches:
+    - develop
+  # as well as upon manual triggers through the 'Actions' tab of the Github UI
+  #workflow_dispatch:
+    # periodical run
+    # schedule:
+        # - cron: "0 5 * * 1" # 5.00 am, every day, weekday So-Sa, Monday
 
-
-
-
-
-on: push
 #  ubuntu-latest 
 
+
 jobs:
-    build_and_test:
-        runs-on: windows-2019
-        strategy:
-            matrix:
-                python-version: [3.7, 3.8]
+  build_and_test:
+    name: Build and test
+    runs-on: windows-2019
+    strategy:
+      matrix:
+        python-version: [3.7, 3.8]
 
       # build-and-test:
         # strategy:
