@@ -15,12 +15,12 @@ name: CI
     # # schedule:
         # # - cron: "0 5 * * 1" # 5.00 am, every day, weekday So-Sa, Monday
 
+
 on: [push]
 
 jobs:
   build:
-
-    runs-on: windows-2019
+    runs-on: windows-2019 #ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.7", "3.8"]
