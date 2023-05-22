@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-import pytest
 import sys, os
-from .attrici import postprocess as pp
+sys.path.append("..")  # search within parent dir of tests_folder
+import pytest
 
-### TODO fix sys.path
-#curr_path = "/mnt/c/Users/Anna/Documents/UNI/HiWi/IWRcourses_PY_ML_meetings/effective_software_testing/iwr-project-automated-testing-and-continuous-integration/"
-#sys.path.insert(0, curr_path)
-#sys.path.append("..") # search within parent dir of tests_folder
+from attrici import postprocess as pp
 
 
 def test_mixedCoordList_rescale_aoi():

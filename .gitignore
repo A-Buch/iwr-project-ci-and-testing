@@ -5,6 +5,9 @@ jupyter_notebooks/test_output
 __pycache__/
 output/
 input/
+meteo_data/
+*.nc
+*.nc4
 gswp3
 *.egg-info/
 submit.sh

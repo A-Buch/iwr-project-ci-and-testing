@@ -26,9 +26,10 @@ jobs:
         python-version: [3.7]
 
     steps:
-    - name: Checkout repository
-      shell: python
       uses: actions/checkout@v3
+    - name: Checkout repository
+      #shell: python
+      uses: actions/setup-checkout@v3
       with:
         # setuptools_scm requires a non-shallow clone of the repository
         fetch-depth: 0
@@ -40,7 +41,7 @@ jobs:
       run: Write-Host "Hi"
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
 
