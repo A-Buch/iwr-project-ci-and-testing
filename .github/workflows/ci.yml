@@ -25,9 +25,9 @@ jobs:
     runs-on: windows-2019 # ${{ matrix.os }}
     strategy:
       matrix:
-        os: ubuntu-latest
+        #os: ubuntu-latest
         python-version: [3.7.3]
-    name: Testing on ${{ matrix.os }} # each job needs a name - mandatory
+    name: Testing on windows-2019, ${{ matrix.python-version }} # each job needs a name - mandatory
 
 
     steps:
