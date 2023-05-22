@@ -15,16 +15,16 @@ on:
     # schedule:
         # - cron: "0 5 * * 1" # 5.00 am, every day, weekday So-Sa, Monday
 
-
-
 jobs:
-  testing:  #build-and-test:
-    runs-on: ${{ matrix.os }}
-    name: Testing on ${{runner.os}} #${{matrix.os}}
+  testing:
+  #build-and-test:
     strategy:
       matrix:
         os:  windows-2019 #ubuntu-latest
         python-version: [3.7]
+    runs-on: ${{ matrix.os }}
+    name: Testing on ${{runner.os}} #${{matrix.os}}
+
 
     steps:
       uses: actions/checkout@v3
