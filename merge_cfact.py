@@ -13,10 +13,6 @@ import subprocess
 import attrici.postprocess as pp
 import settings as s
 
-
-print("balbliblup")
-
-
 # options for postprocess
 rechunk = False
 # cdo_processing needs rechunk
