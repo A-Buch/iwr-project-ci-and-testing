@@ -21,18 +21,13 @@ on:
 jobs:
   build_and_test:
     name: Build and test  # each job needs a name - mandatory
-    runs-on: windows-2019
     strategy:
       matrix:
-        python-version: [3.7]
+        os: windows-2019 
+        python-version: [3.7.3]
+    runs-on: ${{ matrix.os }}
+    name: Testing on ${{ matrix.os }}
 
-      # build-and-test:
-        # strategy:
-          # matrix:
-            # os:  windows-2019 #ubuntu-latest
-            # python-version: [3.7]
-        # runs-on: ${{ matrix.os }}
-        # name: Testing on ${{runner.os}} #${{matrix.os}}
 
     steps:
     - uses: actions/checkout@v3
@@ -83,7 +78,7 @@ jobs:
     - name: Install Python packages
       run: |
         python -m conda install -r requirements-dev.txt
-        if [ -f ./config/environment.yml ]; then conda install -r environment.yml; fi
+        if ( -f ./config/environment.yml ); then conda install -r ./config/environment.yml; fi
         python -m pip install .[tests]
     # pip install -e .
     # pip install flake8  
