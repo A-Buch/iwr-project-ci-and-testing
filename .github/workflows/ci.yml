@@ -17,7 +17,6 @@ on:
 
 jobs:
   testing:
-  #build-and-test:
     strategy:
       matrix:
         os:  windows-2019 #ubuntu-latest
