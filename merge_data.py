@@ -10,6 +10,7 @@ import xarray as xr
 import settings as s
 
 
+
 remove_intermediate_files = False
 
 variable_list = ["tas"]
@@ -17,15 +18,17 @@ variable_list = ["tas"]
 #variable_list = ["tas", "tasmax", "tasmin", "pr6", "rg", "ps", "sfcwind", "rsds", "rlds", "hurs", "huss"]
 timespane_list = ["1950_1989", "1990_2020"] # 
 time_hour = "12"
-tile_list = ["00023"]
+tile_list = ["00024"]
 
 source_base = Path(
     #"/p/tmp/dominikp/meteo_data/BASD_c_attrici_test/"
-    "/p/projects/ou/rd3/dmcci/basd_era5-land_to_efas-meteo/basd_output_data/"
+    #"/p/projects/ou/rd3/dmcci/basd_era5-land_to_efas-meteo/basd_output_data/"
+    "/mnt/c/Users/Anna/Documents/UNI/HiWi/IWRcourses_PY_ML_meetings/effective_software_testing/iwr-project-ci-and-testing/meteo_data/ERA5"
+
 )
 
 source_dir = source_base 
-output_base = Path("/p/tmp/annabu/attrici_interpolation/meteo_data/")
+output_base = Path("/mnt/c/Users/Anna/Documents/UNI/HiWi/IWRcourses_PY_ML_meetings/effective_software_testing/iwr-project-ci-and-testing/meteo_data")
 
 output_dir = output_base / s.dataset 
 output_dir.mkdir(parents=True, exist_ok=True)
@@ -43,23 +46,43 @@ for variable in variable_list:
 
             if not os.path.exists(output_file_ncpdq):
                 ## set all factual datasets to same dimension order
-                cmd = (
+                try:
+                    cmd = (
                         "module load nco && ncpdq -4 -a time,lat,lon " + meteo_file + " " + str(output_file_ncpdq)
-                )
-                print(cmd)
-                subprocess.check_call(cmd, shell=True)
+                    )
+                    print(cmd)
+                    subprocess.check_call(cmd, shell=True)
+                except: 
+                    cmd = (
+                        "ncpdq -4 -a time,lat,lon " + meteo_file + " " + str(output_file_ncpdq)
+                    )
+                    print(cmd)
+                    subprocess.check_call(cmd, shell=True)
 
             ## set time unit from hour to daily
             output_file_setreftime = output_dir / Path(variable + time_hour + "_" + s.dataset.lower() + "_" + timespane + "_" + tile + "_ba_n_srt_tmp.nc4")
             if not os.path.exists(output_file_setreftime):
-                cmd = (
-                    f"module load cdo && cdo -setreftime,{timeunit_year}-01-01,{time_hour}:00:00,1day "
-                    + str(output_file_ncpdq)
-                    + " " 
-                    + str(output_file_setreftime) 
-                )
-                print(cmd)
-                subprocess.check_call(cmd, shell=True)
+                try:
+                    cmd = (
+                        f"module load cdo && cdo -setreftime,{timeunit_year}-01-01,{time_hour}:00:00,1day "
+                        + str(output_file_ncpdq)
+                        + " " 
+                     + str(output_file_setreftime) 
+                    )
+                    print(cmd)
+                    subprocess.check_call(cmd, shell=True)
+                except: 
+                    cmd = (
+                        f"cdo -setreftime,{timeunit_year}-01-01,{time_hour}:00:00,1day "
+                        + str(output_file_ncpdq)
+                        + " " 
+                        + str(output_file_setreftime) 
+                    )
+                    print(cmd)
+                    subprocess.check_call(cmd, shell=True)
+
+
+                
 
             ## Create subset for testing interpolation method
             meteo = xr.load_dataset(output_file_setreftime)
@@ -78,16 +101,28 @@ for variable in variable_list:
         print(f"\nwriting to {output_file_mergetime}:") 
         
         if not os.path.exists(output_file_mergetime):
-            cmd = (
-                "module load cdo && cdo mergetime " 
-                + str(output_dir) + "/" + variable + time_hour + "_" + s.dataset.lower() 
-                + "_????_????_"
-                + tile + "_ba_n_srt_c_tmp.nc4"
-                + " "
-                + str(output_file_mergetime)
-            )
-            print(cmd)
-            subprocess.check_call(cmd, shell=True)
+            try:
+                cmd = (
+                    "module load cdo && cdo mergetime " 
+                    + str(output_dir) + "/" + variable + time_hour + "_" + s.dataset.lower() 
+                    + "_????_????_"
+                    + tile + "_ba_n_srt_c_tmp.nc4"
+                   + " "
+                    + str(output_file_mergetime)
+                )
+                print(cmd)
+                subprocess.check_call(cmd, shell=True)
+            except:
+                cmd = (
+                    "cdo mergetime " 
+                    + str(output_dir) + "/" + variable + time_hour + "_" + s.dataset.lower() 
+                    + "_????_????_"
+                    + tile + "_ba_n_srt_c_tmp.nc4"
+                   + " "
+                    + str(output_file_mergetime)
+                )
+                print(cmd)
+                subprocess.check_call(cmd, shell=True)
 
 
 if remove_intermediate_files == True:

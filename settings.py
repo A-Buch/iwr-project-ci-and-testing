@@ -20,12 +20,15 @@ elif user == "sitreu":
 
 elif user == "annabu":
     # conda_path = "/home/annabu/.conda/envs/attrici"
-    #data_dir = "/mnt/c/Users/Anna/Documents/UNI/PIK/develop"
-    data_dir = "/p/tmp/annabu/attrici_interpolation"
+    #data_dir = "/p/tmp/annabu/attrici_interpolation"
     log_dir = "./log"
+    
+
+data_dir = "/mnt/c/Users/Anna/Documents/UNI/HiWi/IWRcourses_PY_ML_meetings/effective_software_testing/iwr-project-ci-and-testing"
+
 
 ## only for interpolation test
-testarea = "testarea_31"
+testarea = "testarea_28"
 
 input_dir = Path(data_dir) / "meteo_data" 
 
