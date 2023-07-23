@@ -1,4 +1,6 @@
+import logging
 import os
+<<<<<<< HEAD:run_estimation_write.py
 import glob
 import numpy as np
 import netCDF4 as nc
@@ -19,14 +21,30 @@ import logging
 
 
 s.output_dir.mkdir(parents=True,exist_ok=True)
+=======
+from datetime import datetime
+from pathlib import Path
+
+import attrici
+import attrici.datahandler as dh
+import attrici.estimator as est
+import netCDF4 as nc
+import numpy as np
+import pandas as pd
+from func_timeout import FunctionTimedOut, func_timeout
+
+import settings as s
+
+s.output_dir.mkdir(parents=True, exist_ok=True)
+>>>>>>> 6f131256401980e65825e2843ac69375e337729d:run_estimation.py
 logging.basicConfig(
     filename=s.output_dir / "failing_cells.log",
     level=logging.ERROR,
     format="%(asctime)s %(levelname)s %(name)s %(message)s",
 )
 logger = logging.getLogger(__name__)
-# needed to silence verbose pymc3
-pmlogger = logging.getLogger("pymc3")
+# needed to silence verbose pymc
+pmlogger = logging.getLogger("pymc")
 pmlogger.propagate = False
 
 print("Version", attrici.__version__)
@@ -47,14 +65,23 @@ print("submitted:", submitted)
 
 dh.create_output_dirs(s.output_dir)
 
+<<<<<<< HEAD:run_estimation_write.py
 gmt_file = s.input_dir / s.dataset / s.testarea / s.gmt_file
+=======
+gmt_file = s.input_dir.parent / s.gmt_file
+>>>>>>> 6f131256401980e65825e2843ac69375e337729d:run_estimation.py
 ncg = nc.Dataset(gmt_file, "r")
 gmt = np.squeeze(ncg.variables["tas"][:])
 ncg.close()
 
+<<<<<<< HEAD:run_estimation_write.py
 input_file = s.input_dir / s.dataset / s.testarea / s.source_file
 landsea_mask_file = s.input_dir /  s.dataset / s.testarea / s.landsea_file
 print(input_file)
+=======
+input_file = s.input_dir / s.source_file
+landsea_mask_file = s.input_dir / s.landsea_file
+>>>>>>> 6f131256401980e65825e2843ac69375e337729d:run_estimation.py
 
 obs_data = nc.Dataset(input_file, "r")
 nc_lsmask = nc.Dataset(landsea_mask_file, "r")
@@ -64,8 +91,12 @@ lons = obs_data.variables["lon"][:]
 longrid, latgrid = np.meshgrid(lons, lats)
 jgrid, igrid = np.meshgrid(np.arange(len(lons)), np.arange(len(lats)))
 
+<<<<<<< HEAD:run_estimation_write.py
 ls_mask = nc_lsmask.variables["mask"][:,:] #["area_European_01min"][:,:]# 
 
+=======
+ls_mask = nc_lsmask.variables["area_European_01min"][0, :]
+>>>>>>> 6f131256401980e65825e2843ac69375e337729d:run_estimation.py
 df_specs = pd.DataFrame()
 df_specs["lat"] = latgrid[ls_mask == 1]
 df_specs["lon"] = longrid[ls_mask == 1]
@@ -90,11 +121,11 @@ assert calls_per_arrayjob.sum() == len(df_specs)
 # Calculate the starting and ending values for this task based
 # on the SLURM task and the number of runs per task.
 cum_calls_per_arrayjob = calls_per_arrayjob.cumsum(dtype=int)
-start_num = 0 if task_id == 0 else cum_calls_per_arrayjob[task_id-1]
+start_num = 0 if task_id == 0 else cum_calls_per_arrayjob[task_id - 1]
 end_num = cum_calls_per_arrayjob[task_id] - 1
-run_numbers = np.arange(start_num, end_num + 1, 1, dtype=np.int)
+run_numbers = np.arange(start_num, end_num + 1, 1, dtype=int)
 if len(run_numbers) == 0:
-    print ("No runs assigned for this SLURM task.")
+    print("No runs assigned for this SLURM task.")
 else:
     print("This is SLURM task", task_id, "which will do runs", start_num, "to", end_num)
 
@@ -137,27 +168,41 @@ for n in run_numbers[:]:
     df, datamin, scale = dh.create_dataframe(nct[:], nct.units, data, gmt, s.variable)
 
     try:
-        trace, dff = func_timeout(
-            s.timeout, estimator.estimate_parameters, args=(df, sp["lat"], sp["lon"], s.map_estimate)
+        print(
+            f"took {(datetime.now() - TIME0).total_seconds()} seconds till estimator.estimate_parameters is started"
         )
-    except (FunctionTimedOut, ParallelSamplingError, ValueError) as error:
-        if str(error) == "Modes larger 1 are not allowed for the censored model.":
-            raise error
-        else:
-            print("Sampling at", sp["lat"], sp["lon"], " timed out or failed.")
-            print(error)
-            logger.error(
-                str(
-                    "lat,lon: "
-                    + str(sp["lat"])
-                    + " "
-                    + str(sp["lon"])
-                    + " : "
-                    + str(error)
-                )
-            )
-        continue
+        trace, dff = func_timeout(
+            s.timeout,
+            estimator.estimate_parameters,
+            args=(df, sp["lat"], sp["lon"], s.map_estimate, TIME0),
+        )
+    except (FunctionTimedOut, ValueError) as error:
+        raise error
+        # if str(error) == "Modes larger 1 are not allowed for the censored model.":
+        #     raise error
+        # else:
+        #     print("Sampling at", sp["lat"], sp["lon"], " timed out or failed.")
+        #     print(error)
+        #     logger.error(
+        #         str(
+        #             "lat,lon: "
+        #             + str(sp["lat"])
+        #             + " "
+        #             + str(sp["lon"])
+        #             + " : "
+        #             + str(error)
+        #         )
+        #     )
+        # continue
 
+<<<<<<< HEAD:run_estimation_write.py
+=======
+    df_with_cfact = estimator.estimate_timeseries(
+        dff, trace, datamin, scale, s.map_estimate
+    )
+    dh.save_to_disk(df_with_cfact, fname_cell, sp["lat"], sp["lon"], s.storage_format)
+
+>>>>>>> 6f131256401980e65825e2843ac69375e337729d:run_estimation.py
 obs_data.close()
 nc_lsmask.close()
 print(

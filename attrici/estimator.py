@@ -1,7 +1,5 @@
 import os
-import numpy as np
-import pandas as pd
-import pymc3 as pm
+import pickle
 from datetime import datetime
 import netCDF4 as nc
 from pathlib import Path
@@ -9,13 +7,20 @@ from pathlib import Path
 from time import sleep
 import xarray as xr
 
-import attrici.datahandler as dh
+import numpy as np
+import pandas as pd
+import pymc as pm
+
 import attrici.const as c
-import attrici.models as models
+import attrici.datahandler as dh
 import attrici.fourier as fourier
+<<<<<<< HEAD
 import attrici.postprocess as pp
 import settings as s
 import pickle
+=======
+import attrici.models as models
+>>>>>>> 6f131256401980e65825e2843ac69375e337729d
 
 
 model_for_var = {
@@ -25,7 +30,7 @@ model_for_var = {
     "pr": models.Pr,
     "hurs": models.Hurs,
     "wind": models.Wind,
-    "sfcwind": models.Wind,
+    "sfcWind": models.Wind,
     "ps": models.Ps,
     "rsds": models.Rsds,
     "rlds": models.Rlds,
@@ -44,7 +49,7 @@ class estimator(object):
         self.seed = cfg.seed
         self.progressbar = cfg.progressbar
         self.variable = cfg.variable
-        self.modes = cfg.modes
+        self.modes = cfg.modes      
         self.f_rescale = c.mask_and_scale[cfg.variable][1]
         self.save_trace = cfg.save_trace
         self.report_variables = cfg.report_variables
@@ -52,7 +57,7 @@ class estimator(object):
         self.startdate = cfg.startdate
 
         try:
-            #TODO remove modes from initialization
+            # TODO remove modes from initialization
             self.statmodel = model_for_var[self.variable](self.modes)
 
         except KeyError as error:
@@ -61,8 +66,12 @@ class estimator(object):
             )
             raise error
 
+<<<<<<< HEAD
 
     def estimate_parameters(self, time, out, df, lat, lon, lat_idx, lon_idx, map_estimate):
+=======
+    def estimate_parameters(self, df, lat, lon, map_estimate, TIME0):
+>>>>>>> 6f131256401980e65825e2843ac69375e337729d
         x_fourier = fourier.get_fourier_valid(df, self.modes)
         x_fourier_01 = (x_fourier + 1) / 2
         x_fourier_01.columns = ["pos" + col for col in x_fourier_01.columns]
@@ -77,6 +86,7 @@ class estimator(object):
         )
         if map_estimate:
             try:
+<<<<<<< HEAD
                 print("Redo parameter estimation and writing parameters to file.")
                 with open(outdir_for_cell, 'rb') as handle:
                     free_params = pickle.load(handle) ## load from trace.h5 files
@@ -96,9 +106,17 @@ class estimator(object):
                 print(f"wrote all {len(param_names)} to cell position",  int(lat_idx), int(lon_idx))
 
             ## TODO: check if unnecessary
+=======
+                with open(outdir_for_cell, "rb") as handle:
+                    trace = pickle.load(handle)
+>>>>>>> 6f131256401980e65825e2843ac69375e337729d
             except Exception as e:
                 print("Problem with saved trace:", e, ". Redo parameter estimation.")
+                print(
+                    f"took {(datetime.now() - TIME0).total_seconds():.0f}s until find_MAP is run"
+                )
                 trace = pm.find_MAP(model=self.model)
+<<<<<<< HEAD
                 free_params = {key: value for key, value in trace.items()
                                        if key.startswith('weights') or key=='logp'}
                 if self.save_trace:
@@ -117,6 +135,22 @@ class estimator(object):
                     out.variables[param_name][ :, int(lat_idx), int(lon_idx)] = values_per_parameter
                 print(f"wrote all {len(param_names)} to cell position",  int(lat_idx), int(lon_idx))
 
+=======
+
+                print(
+                    f"took {(datetime.now() - TIME0).total_seconds():.0f}s until find_MAP is done"
+                )
+                if self.save_trace:
+                    with open(outdir_for_cell, "wb") as handle:
+                        free_params = {
+                            key: value
+                            for key, value in trace.items()
+                            if key.startswith("weights") or key == "logp"
+                        }
+                        pickle.dump(
+                            free_params, handle, protocol=pickle.HIGHEST_PROTOCOL
+                        )
+>>>>>>> 6f131256401980e65825e2843ac69375e337729d
         else:
             # FIXME: Rework loading old traces
             # print("Search for trace in\n", outdir_for_cell)
@@ -210,7 +244,7 @@ class estimator(object):
                     chains=self.chains,
                     tune=self.tune,
                     progressbar=self.progressbar,
-                    target_accept=.95
+                    target_accept=0.95,
                 )
             # could set target_accept=.95 to get smaller step size if warnings appear
         elif self.inference == "ADVI":
@@ -233,6 +267,12 @@ class estimator(object):
 
         return trace
 
+<<<<<<< HEAD
+=======
+    def estimate_timeseries(
+        self, df, trace, datamin, scale, map_estimate, subtrace=1000
+    ):
+>>>>>>> 6f131256401980e65825e2843ac69375e337729d
 
     def estimate_timeseries(self, df, trace, datamin, scale, map_estimate, subtrace=1000):
         #print(trace["mu"].shape, df.shape)
@@ -240,9 +280,14 @@ class estimator(object):
             trace, df, subtrace, self.model, self.progressbar, map_estimate
         )
 
+<<<<<<< HEAD
         df_params = dh.create_ref_df(  ## only mu etc, not weights
             df, trace_obs, trace_cfact, self.statmodel.params
         )
+=======
+        df_params = dh.create_ref_df(df, trace_obs, trace_cfact, self.statmodel.params)
+
+>>>>>>> 6f131256401980e65825e2843ac69375e337729d
         cfact_scaled = self.statmodel.quantile_mapping(df_params, df["y_scaled"])
         print("Done with quantile mapping.")
 
@@ -254,8 +299,8 @@ class estimator(object):
         df.loc[:, "cfact"] = self.f_rescale(df.loc[:, "cfact_scaled"], datamin, scale)
 
         # populate invalid values originating from y_scaled with with original values
-        if self.variable == 'pr':
-            df.loc[df['cfact_scaled'] == 0, 'cfact'] = 0
+        if self.variable == "pr":
+            df.loc[df["cfact_scaled"] == 0, "cfact"] = 0
         else:
             invalid_index = df.index[df["y_scaled"].isna()]
             df.loc[invalid_index, "cfact"] = df.loc[invalid_index, "y"]
@@ -275,8 +320,8 @@ class estimator(object):
         for v in df_params.columns:
             df.loc[:, v] = df_params.loc[:, v].values
 
-        if map_estimate:
-            df.loc[:, "logp"] = trace_obs['logp'].mean(axis=0)
+        # if map_estimate:
+        # df.loc[:, "logp"] = trace_obs["logp"].mean(axis=0)
 
         if self.report_variables != "all":
             df = df.loc[:, self.report_variables]

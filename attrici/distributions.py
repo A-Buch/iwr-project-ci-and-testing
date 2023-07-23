@@ -1,6 +1,6 @@
 import numpy as np
+import pymc as pm
 from scipy import stats
-import pymc3 as pm
 
 import attrici.datahandler as dh
 import attrici.models as models
@@ -45,6 +45,7 @@ class Distribution(object):
                         print(f"replaced {key} in model with full data-set")
                     except KeyError as e:
                         pass
+<<<<<<< HEAD
                 trace_obs = pm.sample_posterior_predictive(
                     [trace],
                     samples=1,
@@ -53,15 +54,32 @@ class Distribution(object):
                 )
 
                 for gmt in ['gmt', 'gmtv']:
+=======
+
+                print(f"params = self.params")
+                trace_obs = pm.sample_posterior_predictive(
+                    [trace],
+                    var_names=self.params,  # + ["logp"],  # + ["obs"],
+                    progressbar=progressbar,
+                    return_inferencedata=False,
+                )
+                for gmt in ["gmt", "gmtv"]:
+>>>>>>> 6f131256401980e65825e2843ac69375e337729d
                     try:
-                        pm.set_data({gmt: np.zeros_like(df['gmt_scaled'])})
+                        pm.set_data({gmt: np.zeros_like(df["gmt_scaled"])})
                     except KeyError as e:
                         pass
                 trace_cfact = pm.sample_posterior_predictive(
                     [trace],
+<<<<<<< HEAD
                     samples=1,
                     var_names=self.params + ['logp'],
                     progressbar=progressbar
+=======
+                    var_names=self.params,  # + ["logp"],  # + ["obs"],
+                    progressbar=progressbar,
+                    return_inferencedata=False,
+>>>>>>> 6f131256401980e65825e2843ac69375e337729d
                 )
             print("Resampled missing.")
             print("trace obs and cfact: ", trace_obs, trace_cfact)
@@ -106,18 +124,18 @@ class Distribution(object):
                 trace_obs = pm.sample_posterior_predictive(
                     [trace][-subtrace:],
                     samples=subtrace,
-                    var_names=self.params + ['logp'],
+                    var_names=self.params + ["logp"],
                     progressbar=progressbar,
                 )
-                for gmt in ['gmt', 'gmtv']:
+                for gmt in ["gmt", "gmtv"]:
                     try:
-                        pm.set_data({gmt: np.zeros_like(df['gmt_scaled'])})
+                        pm.set_data({gmt: np.zeros_like(df["gmt_scaled"])})
                     except KeyError as e:
                         pass
                 trace_cfact = pm.sample_posterior_predictive(
                     trace[-subtrace:],
                     samples=subtrace,
-                    var_names=self.params + ['logp'],
+                    var_names=self.params + ["logp"],
                     progressbar=progressbar,
                 )
             print("Resampled missing.")
@@ -228,18 +246,17 @@ class Gamma(Distribution):
         self.params = ["mu", "sigma"]
         self.parameter_bounds = {"mu": [0, None], "sigma": [0, None]}
 
-
     def quantile_mapping(self, d, y_scaled):
         quantile = stats.gamma.cdf(
-                y_scaled,
-                d["mu"] ** 2.0 / d["sigma"] ** 2.0,
-                scale=d["sigma"] ** 2.0 / d["mu"],
-            )
+            y_scaled,
+            d["mu"] ** 2.0 / d["sigma"] ** 2.0,
+            scale=d["sigma"] ** 2.0 / d["mu"],
+        )
         x_mapped = stats.gamma.ppf(
-                quantile,
-                d["mu_ref"] ** 2.0 / d["sigma_ref"] ** 2.0,
-                scale=d["sigma_ref"] ** 2.0 / d["mu_ref"],
-            )
+            quantile,
+            d["mu_ref"] ** 2.0 / d["sigma_ref"] ** 2.0,
+            scale=d["sigma_ref"] ** 2.0 / d["mu_ref"],
+        )
 
         return x_mapped
 

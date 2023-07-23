@@ -21,10 +21,14 @@ Creates a land(sea)mask based on the factual input dataset.
 The binary mask is only needed for testing the interpolation
 `python -u ./create_masks.py &`
 
+<<<<<<< HEAD
 #### Write out trace files
 Write out trace file containing parameter values on which the counterfactual variable is based on. 
 One trace file is created for each cell of the AOI. 
 `python -u ./run_estimation_write.py &`
+=======
+`conda create -c conda-forge -n attrici "pymc>=5" python=3.10.11`
+>>>>>>> 6f131256401980e65825e2843ac69375e337729d
 
 #### Interpolate parameters
 Interpolate parameters. The script loads the parameters stored in the trace files, writes them to a netCDF file and interpolates them. 
