@@ -20,15 +20,21 @@ on:
 
 
 jobs:
+  ruff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: chartboost/ruff-action@v1
+      
   build_and_test:
     #name: Build and test  # each job needs a name - mandatory
-    runs-on: windows-2019 # ${{ matrix.os }}
     strategy:
+      #fail-fast: false
       matrix:
-        #os: ubuntu-latest
-        python-version: [3.7.3]
-    name: Testing on windows-2019, ${{ matrix.python-version }} # each job needs a name - mandatory
-
+        os: ubuntu-latest
+        python-version: [3.10.11]
+    runs-on: ${{ matrix.os }}
+    name: Testing on "${{matrix.os}} :: Python ${{matrix.python-version}}" # each job needs a name - mandatory
 
     steps:
     - uses: actions/checkout@v3
@@ -42,7 +48,7 @@ jobs:
 
     # use this only for windows run
     - name: greetings f powershell
-      if: runner.os == 'Windows' # bei if its runner.os and in 'xx'
+      if: runner.os == 'Windows' # only if its runner.os and in 'xx'
       shell: pwsh
       run: Write-Host "Hi"
 
@@ -79,10 +85,8 @@ jobs:
     - name: Install Python packages
       run: |
         python -m conda install -r requirements-dev.txt
-        python -m conda install -r ./config/environment.yml
+        python -m poetry install -r poetry.lock
         python -m pip install .[tests]
-      # TODO if [ -f ./config/environment.yml ]; then conda install -r ./config/environment.yml; fi
-      # python -m pip install .[tests]
 
     # pip install -e .
     # pip install flake8  
