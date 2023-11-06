@@ -2,18 +2,11 @@ import numpy as np
 import pymc as pm
 from scipy import stats
 
-import attrici.datahandler as dh
-import attrici.models as models
-import attrici.fourier as fourier
-import settings as s
-import xarray as xr
-
-
 
 class Distribution(object):
     def __init__(self):
-        print(f"Using {type(self).__name__} distribution model.")
 
+        print(f"Using {type(self).__name__} distribution model.")
 
     def resample_missing(self, trace, df, subtrace, model, progressbar, map_estimate):
         # FIXME: this breaks if first parameter does not have time dimension
@@ -39,22 +32,13 @@ class Distribution(object):
                         print(f"replaced {key} in model with full data-set")
                     except KeyError as e:
                         pass
+
                 for key, df_key in fourier_vars.items():
                     try:
                         pm.set_data({key: df.filter(regex=df_key).values})
                         print(f"replaced {key} in model with full data-set")
                     except KeyError as e:
                         pass
-<<<<<<< HEAD
-                trace_obs = pm.sample_posterior_predictive(
-                    [trace],
-                    samples=1,
-                    var_names=self.params + ['logp'],
-                    progressbar=progressbar
-                )
-
-                for gmt in ['gmt', 'gmtv']:
-=======
 
                 print(f"params = self.params")
                 trace_obs = pm.sample_posterior_predictive(
@@ -64,31 +48,19 @@ class Distribution(object):
                     return_inferencedata=False,
                 )
                 for gmt in ["gmt", "gmtv"]:
->>>>>>> 6f131256401980e65825e2843ac69375e337729d
                     try:
                         pm.set_data({gmt: np.zeros_like(df["gmt_scaled"])})
                     except KeyError as e:
                         pass
                 trace_cfact = pm.sample_posterior_predictive(
                     [trace],
-<<<<<<< HEAD
-                    samples=1,
-                    var_names=self.params + ['logp'],
-                    progressbar=progressbar
-=======
                     var_names=self.params,  # + ["logp"],  # + ["obs"],
                     progressbar=progressbar,
                     return_inferencedata=False,
->>>>>>> 6f131256401980e65825e2843ac69375e337729d
                 )
             print("Resampled missing.")
-            print("trace obs and cfact: ", trace_obs, trace_cfact)
-            
-            
         else:
             print("Trace is not complete due to masked data. Resample missing.")
-            print("self.params[0]", self.params)
-            print("trace", trace)
             print(
                 "Trace length:",
                 trace[self.params[0]].shape[1],
@@ -121,8 +93,9 @@ class Distribution(object):
                         print(f"replaced {key} in model with full data-set")
                     except KeyError as e:
                         pass
+
                 trace_obs = pm.sample_posterior_predictive(
-                    [trace][-subtrace:],
+                    trace[-subtrace:],
                     samples=subtrace,
                     var_names=self.params + ["logp"],
                     progressbar=progressbar,
