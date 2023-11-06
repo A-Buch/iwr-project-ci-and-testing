@@ -22,6 +22,8 @@ pytest = "^7.2.2"
 pytest-cov = "^4.0.0"
 ruff = "^0.0.275"
 
+[tool.black]
+line-length = 150
 
 [tool.ruff]
 select = [
@@ -34,7 +36,7 @@ select = [
     "C90",  # mccabe
 ]
 ignore = []
-line-length = 88  # Same as Black
+line-length = 150  # Same as Black
 
 
 [build-system]
