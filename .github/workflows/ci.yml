@@ -25,9 +25,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: chartboost/ruff-action@v1
-        with:
-            args: --check .
-            fix_args: --fix .
+      - run: |
+          ruff check .
+          ruff fix .
   build_and_test:
     #name: Build and test  # each job needs a name - mandatory
     strategy:
