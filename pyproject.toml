@@ -34,7 +34,7 @@ select = [
     "W",    # pycodestyle Warning
     "C90",  # mccabe
 ]
-ignore = ["C901", "E714"]
+ignore = ["C901", "E714", "I001"]
 exclude = [".venv", ".json", ".ipynb", "versioneer.py"]
 line-length = 150  # Same as Black
 

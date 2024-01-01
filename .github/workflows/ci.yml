@@ -89,6 +89,7 @@ jobs:
      # run: |
         #python -m conda install -r requirements-dev.txt
       run: |
+        pip install --upgrade pip
         python -m poetry install -r poetry.lock
         python -m pip install .[tests]
 
