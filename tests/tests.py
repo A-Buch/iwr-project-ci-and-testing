@@ -84,6 +84,7 @@ class TestProcessing(unittest.TestCase):
         )
 
 
+
     def test_number_failing_cells(self):
         """
         test if processing of cells failed 
