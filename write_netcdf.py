@@ -1,14 +1,10 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-import glob
 import re
-import itertools
 import subprocess
-# import pandas as pd
 from datetime import datetime
 from pathlib import Path
-import matplotlib.pyplot as plt
 
 import netCDF4 as nc
 import numpy as np
@@ -50,7 +46,7 @@ cdo_ops = {
 def get_float_from_string(file_name):
     floats_in_string = re.findall(r"[-+]?(?:\d*\.*\d+)", file_name)
     if len(floats_in_string) != 1:
-        raise ValueError("there is no ore more than one float in this string")
+        raise ValueError("there is no or more than one float in this string")
     return float(floats_in_string[0])
 
 TIME0 = datetime.now()
@@ -69,8 +65,6 @@ if write_netcdf:
 
     ### check which data is available
     data_list = []
-    #lat_indices = []
-    #lon_indices = []
     lat_float_list = []
     lon_float_list = []
     for i in data_gen:
@@ -116,12 +110,9 @@ if write_netcdf:
         lat = get_float_from_string(Path(dfpath).parent.name)
         lon = get_float_from_string(Path(dfpath).stem.split("lon")[-1])
         print(lat)
-        print(type(outfile.variables['lat'][:]))
-        print(outfile.variables['lat'][:])
-        lat_idx = (np.abs(outfile.variables['lat'][:] - lat)).argmin()
-        lon_idx = (np.abs(outfile.variables['lon'][:] - lon)).argmin()
-        # lat_idx = pp.rescale_aoi(outfile.variables['lat'][:], lat)
-        # lon_idx = pp.rescale_aoi(outfile.variables['lon'][:], lon)
+        print(outfile.variables['lat'][:]) # <class 'numpy.ma.core.MaskedArray'>
+        lat_idx = pp.rescale_aoi(outfile.variables['lat'][:], lat)
+        lon_idx = pp.rescale_aoi(outfile.variables['lon'][:], lon)
 
         for var in s.report_to_netcdf:
             ts = df[vardict[var]]

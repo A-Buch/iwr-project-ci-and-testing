@@ -34,9 +34,8 @@ select = [
     "W",    # pycodestyle Warning
     "C90",  # mccabe
 ]
-###     "N",    # pep8-nameing
-ignore = ["C901", "E714"] #, "N801", "N806", "N813", "N818"]
-exclude = [".venv", ".json", ".ipynb"]
+ignore = ["C901", "E714"]
+exclude = [".venv", ".json", ".ipynb", "versioneer.py"]
 line-length = 150  # Same as Black
 
 
