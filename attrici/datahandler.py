@@ -1,12 +1,9 @@
 import pathlib
-import sys
-
 import netCDF4 as nc
 import numpy as np
 import pandas as pd
 
 import attrici.const as c
-import attrici.fourier as fourier
 
 
 def create_output_dirs(output_dir):

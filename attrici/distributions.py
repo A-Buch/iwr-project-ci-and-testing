@@ -30,17 +30,16 @@ class Distribution(object):
                     try:
                         pm.set_data({key: df[df_key].values})
                         print(f"replaced {key} in model with full data-set")
-                    except KeyError as e:
+                    except KeyError:
                         pass
 
                 for key, df_key in fourier_vars.items():
                     try:
                         pm.set_data({key: df.filter(regex=df_key).values})
                         print(f"replaced {key} in model with full data-set")
-                    except KeyError as e:
+                    except KeyError:
                         pass
 
-                print(f"params = self.params")
                 trace_obs = pm.sample_posterior_predictive(
                     [trace],
                     var_names=self.params,  # + ["logp"],  # + ["obs"],
@@ -84,14 +83,14 @@ class Distribution(object):
                     try:
                         pm.set_data({key: df[df_key].values})
                         print(f"replaced {key} in model with full data-set")
-                    except KeyError as e:
+                    except KeyError:
                         pass
 
                 for key, df_key in fourier_vars.items():
                     try:
                         pm.set_data({key: df.filter(regex=df_key).values})
                         print(f"replaced {key} in model with full data-set")
-                    except KeyError as e:
+                    except KeyError:
                         pass
 
                 trace_obs = pm.sample_posterior_predictive(
@@ -103,7 +102,7 @@ class Distribution(object):
                 for gmt in ["gmt", "gmtv"]:
                     try:
                         pm.set_data({gmt: np.zeros_like(df["gmt_scaled"])})
-                    except KeyError as e:
+                    except KeyError:
                         pass
                 trace_cfact = pm.sample_posterior_predictive(
                     trace[-subtrace:],

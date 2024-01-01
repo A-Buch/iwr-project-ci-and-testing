@@ -25,7 +25,7 @@ class Pr(attrici.distributions.BernoulliGamma):
 
             gmt = pm.MutableData("gmt", df_subset["gmt_scaled"].values)
             xf0 = pm.MutableData("xf0", df_subset.filter(regex="^mode_0_").values)
-            
+
             gmtv = pm.MutableData("gmtv", df_valid["gmt_scaled"].values)
             xf0_np = df_valid.filter(regex="^mode_0_").values
             xf0v = pm.MutableData("xf0v", xf0_np)
@@ -67,7 +67,7 @@ class Pr(attrici.distributions.BernoulliGamma):
                 + weights_pbern_longterm_intercept
                 + weights_pbern_longterm_trend * gmt,
             )
-            pbern = pm.Deterministic("pbern", pm.math.invlogit(logit_pbern))
+            # pbern = pm.Deterministic("pbern", pm.math.invlogit(logit_pbern))
             # mu
             weights_mu_longterm_intercept = pm.Normal(
                 "weights_mu_longterm_intercept", mu=0, sigma=1
@@ -116,7 +116,7 @@ class Pr(attrici.distributions.BernoulliGamma):
             nu = pm.Deterministic("nu", pm.math.exp(eta_nu))
             sigma = pm.Deterministic("sigma", mu / nu)  # nu^2 = k -> k shape parameter
 
-            logp_ = pm.Deterministic("logp", model.logp())
+            # logp_ = pm.Deterministic("logp", model.logp())
 
             if not self.test:
                 pm.Bernoulli(
@@ -207,7 +207,7 @@ class Tas(attrici.distributions.Normal):
                 + weights_sigma_longterm_intercept
             )
             sigma = pm.Deterministic("sigma", pm.math.exp(eta_sigma))
-            logp_ = pm.Deterministic("logp", model.logp())
+            # logp_ = pm.Deterministic("logp", model.logp())
 
             if not self.test:
                 pm.Normal("obs", mu=mu, sigma=sigma, observed=df_valid["y_scaled"])
@@ -291,7 +291,7 @@ class Rlds(attrici.distributions.Normal):
                 + weights_sigma_longterm_intercept
             )
             sigma = pm.Deterministic("sigma", pm.math.exp(eta_sigma))
-            logp_ = pm.Deterministic("logp", model.logpt)
+            # logp_ = pm.Deterministic("logp", model.logpt)
 
             if not self.test:
                 pm.Normal("obs", mu=mu, sigma=sigma, observed=df_valid["y_scaled"])
@@ -375,7 +375,7 @@ class Ps(attrici.distributions.Normal):
                 + weights_sigma_longterm_intercept
             )
             sigma = pm.Deterministic("sigma", pm.math.exp(eta_sigma))
-            logp_ = pm.Deterministic("logp", model.logpt)
+            # logp_ = pm.Deterministic("logp", model.logpt)
 
             if not self.test:
                 pm.Normal("obs", mu=mu, sigma=sigma, observed=df_valid["y_scaled"])
@@ -402,8 +402,7 @@ class Hurs(attrici.distributions.Beta):
             gmtv = pm.MutableData("gmt", df_valid["gmt_scaled"].values)
             xf0_np = df_valid.filter(regex="^mode_0_").values
             xf0 = pm.MutableData("xf0", xf0_np)
-            print(xf0_np.shape)          
-            
+
             covariates = pm.math.concatenate(
                 [xf0, tt.tile(gmtv[:, None], (1, int(xf0_np.shape[1]))) * xf0], axis=1
             )
@@ -465,7 +464,7 @@ class Hurs(attrici.distributions.Beta):
             alpha = pm.Deterministic("alpha", mu * phi)
 
             beta = pm.Deterministic("beta", (1 - mu) * phi)
-            logp_ = pm.Deterministic("logp", model.logp())
+            # logp_ = pm.Deterministic("logp", model.varlogp)
 
             if not self.test:
                 pm.Beta("obs", alpha=alpha, beta=beta, observed=df_valid["y_scaled"])
@@ -564,7 +563,7 @@ class Tasskew(attrici.distributions.Normal):
                 + weights_sigma_longterm_intercept
             )
             sigma = pm.Deterministic("sigma", pm.math.exp(eta_sigma))
-            logp_ = pm.Deterministic("logp", model.logp())
+            # logp_ = pm.Deterministic("logp", model.logp())
 
             if not self.test:
                 pm.Normal("obs", mu=mu, sigma=sigma, observed=df_valid["y_scaled"])
@@ -663,7 +662,7 @@ class Rsds(attrici.distributions.Normal):
                 + weights_sigma_longterm_intercept
             )
             sigma = pm.Deterministic("sigma", pm.math.exp(eta_sigma))
-            logp_ = pm.Deterministic("logp", model.logp())
+            # logp_ = pm.Deterministic("logp", model.logp())
 
             if not self.test:
                 pm.Normal("obs", mu=mu, sigma=sigma, observed=df_valid["y_scaled"])
@@ -748,9 +747,9 @@ class RsdsWeibull(attrici.distributions.Weibull):
                 tt.dot(xf0, weights_alpha_fc_intercept)
                 + weights_alpha_longterm_intercept
             )
-            
+
             alpha = pm.Deterministic("alpha", pm.math.exp(eta_alpha))
-            logp_ = pm.Deterministic("logp", model.logpt)
+            # logp_ = pm.Deterministic("logp", model.logpt)
 
             if not self.test:
                 pm.Weibull("obs", alpha=alpha, beta=beta, observed=df_valid["y_scaled"])
@@ -777,7 +776,7 @@ class Tasrange(attrici.distributions.Gamma):
             gmtv = pm.MutableData("gmt", df_valid["gmt_scaled"].values)
             xf0_np = df_valid.filter(regex="^mode_0_").values
             xf0 = pm.MutableData("xf0", xf0_np)
-            print("xfo shape" ,xf0.shape)
+            print("xfo shape", xf0.shape)
             print("xfo_np shape", xf0_np.shape)
 
             covariates = pm.math.concatenate(
@@ -834,7 +833,7 @@ class Tasrange(attrici.distributions.Gamma):
             # The logit function is the link function in the Generalized Linear Model
             mu = pm.Deterministic("mu", pm.math.exp(eta))
             sigma = pm.Deterministic("sigma", mu / nu)
-            logp_ = pm.Deterministic("logp", model.logp())
+            # logp_ = pm.Deterministic("logp", model.logp())
 
             if not self.test:
                 pm.Gamma("obs", mu=mu, sigma=sigma, observed=df_valid["y_scaled"])
@@ -922,7 +921,7 @@ class Wind(attrici.distributions.Weibull):
                 + weights_alpha_longterm_intercept
             )
             alpha = pm.Deterministic("alpha", pm.math.exp(eta_alpha))
-            logp_ = pm.Deterministic("logp", model.logp())
+            # logp_ = pm.Deterministic("logp", model.logp())
 
             # mu = pm.math.invlogit(eta)
             # alpha = pm.Deterministic("alpha", mu * phi)

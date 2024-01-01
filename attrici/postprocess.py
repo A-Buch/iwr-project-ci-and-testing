@@ -32,7 +32,7 @@ def form_global_nc(ds, time, lat, lon, vnames, torigin):
     longitudes = ds.createVariable("lon", "f8", ("lon",))
     latitudes = ds.createVariable("lat", "f8", ("lat",))
     for var in vnames:
-        data = ds.createVariable(
+        ds.createVariable(
             var,
             "f4",
             ("time", "lat", "lon"),
@@ -56,18 +56,17 @@ def rechunk_netcdf(ncfile, ncfile_rechunked):
 
     ncfile_lat = len(xr.open_dataset(ncfile).lat)
     ncfile_lon = len(xr.open_dataset(ncfile).lon)
-    
+
     TIME0 = datetime.now()
-    
+
     try:
         cmd = (
-            "ncks -4 -O --deflate 5 "
-            # "ncks -4 -O --deflate 5 "
-            + "--cnk_plc=g3d --cnk_dmn=lat,"+ str(ncfile_lat) 
-            + " --cnk_dmn=lon," + str(ncfile_lon) 
-            + " "
-            + str(ncfile)
-            + " "
+            "ncks -4 -O --deflate 5 " \
+            + "--cnk_plc=g3d --cnk_dmn=lat,"+ str(ncfile_lat) \
+            + " --cnk_dmn=lon," + str(ncfile_lon) \
+            + " " \
+            + str(ncfile) \
+            + " " \
             + ncfile_rechunked
         )
         print(cmd)
@@ -88,7 +87,7 @@ def rechunk_netcdf(ncfile, ncfile_rechunked):
 
 def rescale_aoi(outfile_variables_coord, coord):
 
-    coord_idx = (np.abs(outfile_variables_coord - coord)).argmin() 
+    coord_idx = (np.abs(outfile_variables_coord - coord)).argmin()
     return coord_idx
 
 
@@ -100,7 +99,7 @@ def replace_nan_inf_with_orig(variable, source_file, ncfile_rechunked):
     print(
         f"Replace invalid values in {ncfile_rechunked} with original values from {source_file}"
     )
-    
+
     ncs = nc.Dataset(source_file, "r")
     ncf = nc.Dataset(ncfile_valid, "a")
 
@@ -111,17 +110,22 @@ def replace_nan_inf_with_orig(variable, source_file, ncfile_rechunked):
     for ti in range(0,var.shape[0],chunklen):
         v = var[ti:ti+chunklen,:,:]
         v_orig = var_orig[ti:ti+chunklen,:,:]
-        logp = ncf['logp'][ti:ti+chunklen, :, :]
+        logp = ncf["logp"][ti:ti+chunklen, :, :]
         # This threshold for logp is to ensure that the model fits the data at all. It is mainly to catch values
         # for logp like -7000
         small_logp = logp < -300
         isinf = np.isinf(v)
         isnan = np.isnan(v)
-        print(f"{ti}: replace {isinf.sum()} inf values, { (np.isnan(v) & (~np.isnan(v_orig))).sum() } nan values and {small_logp.sum()} values with too small logp (<-300).")
+        print(
+            f"""{ti}: replace {isinf.sum()} inf values, 
+                {(np.isnan(v) & (~np.isnan(v_orig))).sum()} nan values and 
+                {small_logp.sum()} values with too small logp (<-300)."""
+        )
 
         v[isinf | isnan | small_logp] = v_orig[isinf | isnan | small_logp]
         var[ti:ti+v.shape[0],:,:] = v
 
     ncs.close()
     ncf.close()
+
     return ncfile_valid

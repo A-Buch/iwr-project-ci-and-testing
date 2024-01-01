@@ -30,12 +30,13 @@ select = [
     "E",    # pycodestyle Error
     "F",    # Pyflakes
     "I",    # isort
-    "N",    # pep8-nameing
     "Q",    # flake8-quotes
     "W",    # pycodestyle Warning
     "C90",  # mccabe
 ]
-ignore = []
+###     "N",    # pep8-nameing
+ignore = ["C901", "E714"] #, "N801", "N806", "N813", "N818"]
+exclude = [".venv", ".json", ".ipynb"]
 line-length = 150  # Same as Black
 
 
