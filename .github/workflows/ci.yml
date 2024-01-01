@@ -36,8 +36,8 @@ jobs:
         os: [ubuntu-latest]
         python-version: [3.10.11]
     runs-on: ${{ matrix.os }}
-   #name: Testing on "${{matrix.os}}" #"${{matrix.os}} :: Python ${{matrix.python-version}}" # each job needs a name - mandatory
-    name: Testing on "${{matrix.os}} :: Python ${{matrix.python-version}}" # each job needs a name - mandatory
+   #name: "Testing on "${{matrix.os}}" #"${{matrix.os}} :: Python ${{matrix.python-version}}" # each job needs a name - mandatory
+    name: "Testing on "${{matrix.os}} :: Python ${{matrix.python-version}}" # each job needs a name - mandatory
 
     steps:
     - uses: actions/checkout@v3
