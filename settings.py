@@ -1,47 +1,41 @@
-import os 
+import os
 import getpass
 from pathlib import Path
+import logging
+import functools
 
 user = getpass.getuser()
 
 # this will hopefully avoid hand editing paths everytime.
 # fill further for convenience.
-if user == "mengel":
-    conda_path = "/home/mengel/anaconda3/envs/pymc3/"
-    data_dir = "/home/mengel/data/20190306_IsimipDetrend/"
-    # data_dir = "/p/tmp/mengel/isimip/isi-cfact"
+if user == "annabu":
+    data_dir = "/p/projects/ou/rd3/dmcci/basd_era5-land_to_efas-meteo/"
     log_dir = "./log"
+    output_dir = Path("/p/tmp/annabu/projects/attrici/output")
 
-elif user == "sitreu":
-     # conda_path = "/home/sitreu/.conda/envs/mpi_py3"
-     # data_dir = "/home/sitreu/Documents/PIK/CounterFactuals/isi-cfact/"
-     data_dir = "/p/tmp/sitreu/isimip/isi-cfact"
-     log_dir = "./log"
-
-elif user == "annabu":
-    # conda_path = "/home/annabu/.conda/envs/attrici"
-    #data_dir = "/p/tmp/annabu/attrici_interpolation"
+elif user == "root":
+    data_dir = "/mnt/c/Users/Anna/Documents/UNI/HiWi/IWRcourses_PY_ML_meetings/effective_software_testing/iwr-project-ci-and-testing/demo_input"
     log_dir = "./log"
-    
-
-data_dir = "/mnt/c/Users/Anna/Documents/UNI/HiWi/IWRcourses_PY_ML_meetings/effective_software_testing/iwr-project-ci-and-testing"
+    output_dir = Path("/mnt/c/Users/Anna/Documents/UNI/HiWi/IWRcourses_PY_ML_meetings/effective_software_testing/iwr-project-ci-and-testing/demo_output") # tile 00002 00006 00007 00008
 
 
-## only for interpolation test
-testarea = "testarea_28"
+# for example "GSWP3", "GSWP3-W5E5"
+dataset = "ERA5"
 
-input_dir = Path(data_dir) / "meteo_data" 
+# select variable to detrend
+variable = "tas"
+tile = "00003"
+hour = "18"
 
-# make output dir same as cwd. Helps if running more than one job.
-output_dir = Path(data_dir) / "output_corr" / testarea
+
+input_dir = Path(data_dir) / dataset / tile
+# folder for testing tile 9 and 10: "attrici_input" / dataset
+output_dir = output_dir / tile # / Path.cwd().name  ## make output dir same as cwd. Helps if running more than one job.    
+#log_dir = log_dir + "/" + tile 
 
 # max time in sec for sampler for a single grid cell.
 timeout = 60 * 60
-
-
 # tas, tasrange pr, prsn, prsnratio, ps, rlds, wind, hurs
-variable = "tas" #"pr6"  # select variable to detrend
-
 
 # number of modes for fourier series of model
 # TODO: change to one number only, as only the first element of list is used.
@@ -54,47 +48,32 @@ inference = "NUTS"
 
 seed = 0  # for deterministic randomisation
 subset = 1  # only use every subset datapoint for bayes estimation for speedup
-startdate = None # may at a date in the format '1950-01-01' to train only on date from after that date
+startdate = None  # may at a date in the format '1950-01-01' to train only on date from after that date
 
-# for example "GSWP3", "GSWP3-W5E5"
-#dataset ="GSWP3-W5E5"
-dataset ="ERA5"  # for EFAS-project
 # use a dataset with only subset spatial grid points for testing
 lateral_sub = 1
-#lateral_sub = 40
-
-# define shape of testarea, should be in shape of (n*3)+1
-file_len = 31  # 16
-
-
-## nc.file storing free parameters 
-trace_file = f"{variable}_parameters_31.nc4"
-interpolated_trace_file = "tas_parameters_interpolated_31.nc4"
-bmask_file = "b_mask_31.nc"
 
 gmt_file = dataset.lower() + "_ssa_gmt.nc4"
-landsea_file = "landseamask_31.nc"
-source_file = variable + "12_" + dataset.lower() + "_1950_2020_00023_ba_preprocessed.nc4"
-org_cfact_file = variable  + "_cfactual_org.nc4" 
-interpolated_cfact_file = variable  + "_cfactual_interp.nc4" 
-
-
+landsea_file = f"landmask_{tile}_demo.nc"
+# source_file = variable + "_" + dataset + "_sub.nc4"
+source_file = (
+    f"rechunked_{dataset}_{variable}{hour}_{dataset}_1950_2020_t_{tile}_basd_redim_demo.nc4"
+)
+cfact_file = f"{source_file.split('.')[0]}_cfact_demo.nc"
 # .h5 or .csv
 storage_format = ".h5"
+
 # "all" or list like ["y","y_scaled","mu","sigma"]
 # for productions runs, use ["cfact"]
-#report_variables = "all"
-#report_variables = ["cfact"]
+# report_variables = "all"
 report_variables = ["ds", "y", "cfact", "logp"]
-
-
 # reporting to netcdf can include all report variables
 # "cfact" is translated to variable, and "y" to variable_orig
 report_to_netcdf = [variable, variable + "_orig", "logp"]
 
 # if map_estimate used, save_trace only writes small data amounts, so advised to have True.
 save_trace = True
-skip_if_data_exists = True 
+skip_if_data_exists = True
 
 # model run settings
 tune = 500  # number of draws to tune model
@@ -105,9 +84,55 @@ chains = 2  # number of chains to calculate (min 2 to check for convergence)
 # submitted jobs will have ncores_per_job=1 always.
 ncores_per_job = 2
 progressbar = True  # print progress in output (.err file for mpi)
-#progressbar = False
 
 #### settings for create_submit.py
 # number of parallel jobs through jobarray
 # needs to be divisor of number of grid cells
-njobarray = 256 #360 #64
+njobarray = 64
+
+
+
+## test: decorator for logger
+def decorate_init_logger(func):
+    """
+    Decorator for logger
+    """
+    @functools.wraps(func)  # preserve original func information from magic methods such as __repr__
+    def wrapper(*args):
+
+        # Call the wrapped function
+        logger = func(*args)
+
+        # Log file handler
+        log_file = "./log/log_warning.log"
+        print(f"Creating separate log file {log_file} for warning message")
+        if not os.path.exists(log_file):             
+            open(log_file, "w+").close()
+
+        return logger
+    return wrapper
+
+
+## decorated/wrapped func
+# @decorate_init_logger # uncoment when to make decorator permanent
+def init_logger(name):
+    """
+    Set up a logger instance
+    name (str): Name of logger 
+    log_file (str): path to log file
+    """
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%m-%d-%Y %I:%M:%S",
+    )
+    # Add stream handler
+    streamhandler = logging.StreamHandler()
+    streamhandler.setLevel(logging.INFO)
+    streamhandler.setFormatter(formatter)
+    if not logger.handlers: 
+        logger.addHandler(streamhandler)
+
+    return logger

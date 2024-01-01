@@ -49,7 +49,7 @@ class Distribution(object):
                 for gmt in ["gmt", "gmtv"]:
                     try:
                         pm.set_data({gmt: np.zeros_like(df["gmt_scaled"])})
-                    except KeyError as e:
+                    except KeyError:
                         pass
                 trace_cfact = pm.sample_posterior_predictive(
                     [trace],

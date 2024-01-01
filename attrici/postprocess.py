@@ -117,8 +117,8 @@ def replace_nan_inf_with_orig(variable, source_file, ncfile_rechunked):
         isinf = np.isinf(v)
         isnan = np.isnan(v)
         print(
-            f"""{ti}: replace {isinf.sum()} inf values, 
-                {(np.isnan(v) & (~np.isnan(v_orig))).sum()} nan values and 
+            f"""{ti}: replace {isinf.sum()} inf values, \
+                {(np.isnan(v) & (~np.isnan(v_orig))).sum()} nan values and \
                 {small_logp.sum()} values with too small logp (<-300)."""
         )
 
