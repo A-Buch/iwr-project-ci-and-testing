@@ -4,7 +4,8 @@ from pathlib import Path
 import logging
 import functools
 
-user = getpass.getuser()
+# user = getpass.getuser()
+user = "root"  # TODO run GithubActions by setting username e.g. "root"
 
 # this will hopefully avoid hand editing paths everytime.
 # fill further for convenience.
