@@ -34,14 +34,14 @@ jobs:
         python-version: [3.10.11]
     runs-on: ${{ matrix.os }}
     #name: "Testing on "${{matrix.os}}" #"${{matrix.os}} :: Python ${{matrix.python-version}}" # each job needs a name - mandatory
-    name: Testing on "${{matrix.os}}" # :: Python ${{matrix.python-version}}" # each job needs a name - mandatory
+    name: Testing on "${{matrix.os}}", Python "${{matrix.python-version}}" # :: Python ${{matrix.python-version}}" # each job needs a name - mandatory
 
     steps:
-    - uses: actions/checkout@v3
+    # - uses: actions/checkout@v3
     - name: Checkout repository
       #shell: python
-      uses: actions/checkout@v3  ## PROBLM: Error: Unable to resolve action actions/setup-checkout, repository not found
-#    org:  uses: actions/setup-checkout@v3  ## PROBLM: Error: Unable to resolve action actions/setup-checkout, repository not found
+      # uses: actions/checkout@v3  ## PROBLM: Error: Unable to resolve action actions/setup-checkout, repository not found
+      uses: actions/setup-python@v3 # org: actions/setup-checkout@v3  ## PROBLM: Error: Unable to resolve action actions/setup-checkout, repository not found
       with:
         # setuptools_scm requires a non-shallow clone of the repository
         fetch-depth: 0
@@ -57,11 +57,10 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install Python package
+    - name: Install Python package for testing
       run: |
         python -m pip install .[tests]
-        echo new line
-        print("hello world")
+        echo installed python tests 
     
     - name: Run Python tests
       run: |
