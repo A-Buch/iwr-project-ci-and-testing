@@ -104,7 +104,7 @@ jobs:
     - name: Run Python tests [pytest]
       working-directory: ./tests
       run: |
-        python -m pytest ./tests/tests.py
+        python -m pytest tests.py
 
 
     - name: Upload coverage to Codecov
