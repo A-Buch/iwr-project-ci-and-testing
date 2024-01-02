@@ -9,9 +9,9 @@ import xarray as xr
 import unittest
 
 sys.path.append("../") # search within parent dir of tests_folder
-import attrici.postprocess as pp # noqa: E402
-import sanity_check.estimation_quality_check as e # noqa: E402
-import settings as s # noqa: E402
+import attrici.postprocess as pp
+import attrici.sanity_check.estimation_quality_check as e
+import settings as s
 
 
 ## get logger
