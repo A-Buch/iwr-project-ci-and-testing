@@ -58,6 +58,8 @@ jobs:
 
     - name: Install Python packages
       run: |
+        pip install poetry
+        pip install -e .
         python -m pip install .[tests]
         echo installed python test package
     #         python -m pip install . [tests]

@@ -17,6 +17,7 @@ matplotlib = "^3.7.2"
 arviz = "^0.16.1"
 func-timeout = "^4.3.5"
 pytest = "^7.4.4"
+pip = "^23.3.2"
 
 [tool.poetry.dev-dependencies]
 black = "^23.3.0"
