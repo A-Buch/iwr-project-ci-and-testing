@@ -56,13 +56,13 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install Python packages
-      run: |
-        pip install poetry
-        pip install -e .
-        python -m pip install .[tests]
-        echo installed python test package
-    #         python -m pip install . [tests]
+    #- name: Install Python packages
+    #  run: |
+    #    pip install poetry
+    #    pip install -e .
+    #    echo installed python test package
+    #         python -m pip install .[tests]
+
 
     - name: Run Python tests
       run: |
