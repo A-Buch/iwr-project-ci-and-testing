@@ -44,8 +44,10 @@ class TestProcessing(unittest.TestCase):
         self.tile = s.tile
         self.variable_hour = s.hour
         self.variable = s.variable
-        self.ts_dir = Path(f"{s.output_dir}/timeseries/{self.variable}")
-        self.trace_dir = Path(f"{s.output_dir}/traces/{self.variable}")
+        # self.ts_dir = Path(f"{s.output_dir}/timeseries/{self.variable}")
+        # self.trace_dir = Path(f"{s.output_dir}/traces/{self.variable}")
+        self.ts_dir = Path(f"demo_output/timeseries/{self.variable}")  # TODO fix workaround with outpaths to test unittests in CI
+        self.trace_dir = self.ts_dir.parent / "traces"
 
 
     def test_number_files_equals_number_landcells(self):
@@ -66,25 +68,19 @@ class TestProcessing(unittest.TestCase):
             f"{nbr_files} number of timeseries files <-> {nbr_landcells} number of land cells"
         )
 
-    # ## TODO do monkeypatching or similar to imitate landmask, trace and timeseries files
-    # def test_occurrence_empty_files(self):
-    #     """
-    #     test if empty temporary files were created
-    #     """
-    #     ## ckeck for empty trace or timeseries file
-    #     ts_files = self.ts_dir.rglob("*.h5")
+    ## TODO do monkeypatching or similar to imitate landmask, trace and timeseries files
+    def test_occurrence_empty_files(self):
+        """
+        test if empty temporary files were created
+        """
+        ## ckeck for empty trace files
+        trace_files = self.trace_dir.rglob("lon*")
 
-    #     trace_dir = self.ts_dir.parent / "traces"
-    #     trace_files = trace_dir.rglob("lon*")
-
-    #     self.assertTrue(
-    #         all([os.stat(file).st_size != 0  for file in trace_files]),
-    #         f"empty file(s) exist in {trace_dir}"
-    #     )
-    #     self.assertTrue(
-    #         all([os.stat(file).st_size != 0  for file in ts_files]),
-    #         f"empty file(s) exist in {self.ts_dir}"
-    #     )
+        self.assertTrue(
+            all([os.stat(file).st_size != 0  for file in trace_files]),
+            f"empty file(s) exist in {self.trace_dir}"
+        )
+    
 
     # ## TODO do monkeypatching or similar 
     def test_number_failing_cells(self):
