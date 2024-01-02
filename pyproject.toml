@@ -4,7 +4,7 @@ version = "0.0.1"
 description = "CI and automated testing integration for attrici, IWR project"
 authors = ["Anna Buch <a.buch@stud.uni-heidelberg.de>"]
 readme = "README.md"
-packages = [{include = "iwr_project_attrici"}]
+# packages = [{include = "iwr_project_attrici"}]
 
 [tool.poetry.dependencies]
 python = "^3.10.11"
