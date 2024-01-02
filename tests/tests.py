@@ -48,7 +48,7 @@ class TestProcessing(unittest.TestCase):
         # self.trace_dir = Path(f"{s.output_dir}/traces/{self.variable}")
         self.ts_dir = Path(f"demo_output/timeseries/{self.variable}")  # TODO fix workaround with outpaths to test unittests in CI
         self.trace_dir = Path(f"demo_output/traces/{self.variable}") #self.ts_dir.parent / "traces" / f"{self.variable}"
-        self.lsm_file = f"demo_input/ERA5/{self.tile}/landmask_{self.tile}_demo.nc"
+        self.lsm_file = Path(f"demo_input/ERA5/{self.tile}") / f"landmask_{self.tile}_demo.nc"
 
 
     def test_number_files_equals_number_landcells(self):
