@@ -74,6 +74,7 @@ jobs:
     runs-on: ubuntu-latest #windows-2019 
 
     steps:
+    
     - name: Checkout repository
       uses: actions/checkout@v3
 
@@ -85,9 +86,7 @@ jobs:
     - name: Install Python packages
      # run: |
         #python -m conda install -r requirements-dev.txt
-        #         pip install poetry  # Failed to build iwr-project-attrici
-                                      # ERROR: Could not build wheels for iwr-project-attrici, 
-                                      # which is required to install pyproject.toml-based projects
+        #         pip install poetry
 
       run: |
         pip install -e .
