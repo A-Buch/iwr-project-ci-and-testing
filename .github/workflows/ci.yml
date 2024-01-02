@@ -58,7 +58,7 @@ jobs:
 
     - name: Install Python packages
       run: |
-        pip install -r requirements-dev.txt
+        pip install pytest
         echo installed python test package
     #    pip install poetry
     #    pip install -e .
@@ -89,7 +89,6 @@ jobs:
      # run: |
         #
         #         python -m poetry install -r poetry.lock  # cant install module poetry 
-        #         pip install -e .
         #         python -m conda install -r requirements-dev.txt
       run: |
         pip install poetry
