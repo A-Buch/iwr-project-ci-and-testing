@@ -47,7 +47,7 @@ class TestProcessing(unittest.TestCase):
         # self.ts_dir = Path(f"{s.output_dir}/timeseries/{self.variable}")
         # self.trace_dir = Path(f"{s.output_dir}/traces/{self.variable}")
         self.ts_dir = Path(f"demo_output/timeseries/{self.variable}")  # TODO fix workaround with outpaths to test unittests in CI
-        self.trace_dir = self.ts_dir.parent / "traces"
+        self.trace_dir = self.ts_dir.parent / "traces" / f"{self.variable}"
 
 
     def test_number_files_equals_number_landcells(self):
@@ -88,7 +88,7 @@ class TestProcessing(unittest.TestCase):
         test if processing of cells failed
         """
         ## check amount of failing cells
-        failing_cells = self.ts_dir.parent.parent / "./failing_cells.log"
+        failing_cells = self.trace_dir.parent.parent / "./failing_cells.log"
         print(failing_cells)
         with open(failing_cells, "r") as f:
              nbr_failcells = sum(1 for _ in f)
