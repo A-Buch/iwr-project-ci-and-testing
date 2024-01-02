@@ -85,10 +85,12 @@ jobs:
     - name: Install Python packages
      # run: |
         #python -m conda install -r requirements-dev.txt
-        #python -m poetry install -r poetry.lock
+        #
+        #         pip install poetry
+
       run: |
         pip install -e .
-        pip install poetry
+        python -m poetry install -r poetry.lock
         python -m pip install .[tests]
 
     # pip install -e .
