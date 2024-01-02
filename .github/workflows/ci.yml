@@ -87,7 +87,7 @@ jobs:
         #python -m conda install -r requirements-dev.txt
         #python -m poetry install -r poetry.lock
       run: |
-        pip install iwr-project-attrici
+        pip install -e .
         pip install poetry
         python -m pip install .[tests]
 
