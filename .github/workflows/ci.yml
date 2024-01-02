@@ -48,8 +48,8 @@ jobs:
     # use this only for windows run
     - name: greetings f powershell
       if: runner.os == 'Windows' # only if its runner.os and in 'xx'
-      shell: pwsh
-      run: Write-Host "Hi"
+        shell: pwsh
+        run: Write-Host "Hi"
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
@@ -58,7 +58,7 @@ jobs:
 
     - name: Install Python packages
       run: |
-        python -m pip install .
+        pip install -e .
         echo installed python packages
     #         python -m pip install . [tests]
 
