@@ -58,7 +58,7 @@ jobs:
 
     - name: Install Python packages
       run: |
-        python -m conda install -r requirements-dev.txt
+        pip install -r requirements-dev.txt
         echo installed python test package
     #    pip install poetry
     #    pip install -e .
