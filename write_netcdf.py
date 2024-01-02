@@ -103,22 +103,23 @@ if write_netcdf:
 
     outfile.setncattr("cfact_version", attrici.__version__)
     outfile.setncattr("runid", Path.cwd().name)
-    
+
     n_written_cells = 0
+
     for dfpath in data_list:
+
         df = pp.read_from_disk(dfpath)
         lat = get_float_from_string(Path(dfpath).parent.name)
         lon = get_float_from_string(Path(dfpath).stem.split("lon")[-1])
-        print(lat)
-        print(outfile.variables['lat'][:]) # <class 'numpy.ma.core.MaskedArray'>
-        lat_idx = pp.rescale_aoi(outfile.variables['lat'][:], lat)
-        lon_idx = pp.rescale_aoi(outfile.variables['lon'][:], lon)
+
+        lat_idx = pp.rescale_aoi(outfile.variables["lat"][:], lat)
+        lon_idx = pp.rescale_aoi(outfile.variables["lon"][:], lon)
 
         for var in s.report_to_netcdf:
             ts = df[vardict[var]]
-            outfile.variables[var][:, lat_idx, lon_idx] = np.array(ts) 
+            outfile.variables[var][:, lat_idx, lon_idx] = np.array(ts)
         n_written_cells = n_written_cells + 1
-   
+
     outfile.close()
 
     print(

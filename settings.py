@@ -16,7 +16,7 @@ if user == "annabu":
 elif user == "root":
     data_dir = "/mnt/c/Users/Anna/Documents/UNI/HiWi/IWRcourses_PY_ML_meetings/effective_software_testing/iwr-project-ci-and-testing/demo_input"
     log_dir = "./log"
-    output_dir = Path("/mnt/c/Users/Anna/Documents/UNI/HiWi/IWRcourses_PY_ML_meetings/effective_software_testing/iwr-project-ci-and-testing/demo_output")
+    output_dir = Path("/mnt/c/Users/Anna/Documents/UNI/HiWi/IWRcourses_PY_ML_meetings/effective_software_testing/iwr-project-ci-and-testing/demo_output") # noqa: E501
 
 
 # for example "GSWP3", "GSWP3-W5E5"
@@ -31,7 +31,7 @@ hour = "18"
 input_dir = Path(data_dir) / dataset / tile
 # folder for testing tile 9 and 10: "attrici_input" / dataset
 output_dir = output_dir / tile # / Path.cwd().name  ## make output dir same as cwd. Helps if running more than one job.    
-#log_dir = log_dir + "/" + tile 
+#log_dir = log_dir + "/" + tile
 
 # max time in sec for sampler for a single grid cell.
 timeout = 60 * 60
