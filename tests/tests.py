@@ -15,7 +15,7 @@ import settings as s
 
 
 ## get logger
-logger = s.init_logger("__test__")
+# logger = s.init_logger("__test__")  # TODO replace print statement by logger message
 
 ## NOTE run single unittest in cell of jupyter nb: unittest.main(argv=[''], verbosity=2, exit=False)
 
@@ -45,6 +45,7 @@ class TestProcessing(unittest.TestCase):
         self.variable_hour = s.hour
         self.variable = s.variable
         self.ts_dir = Path(f"{s.output_dir}/timeseries/{self.variable}")
+        self.trace_dir = Path(f"{s.output_dir}/traces/{self.variable}")
 
 
     def test_number_files_equals_number_landcells(self):
@@ -56,8 +57,8 @@ class TestProcessing(unittest.TestCase):
         nbr_landcells = lsm["area_European_01min"].count().values.tolist()
         print(f"Tile: {self.tile}, Variable: {self.variable, self.variable_hour}: {nbr_landcells} Land cells in lsm")
 
-        print("Searching in", self.ts_dir)
-        nbr_files = e.count_files_in_directory(self.ts_dir, ".h5")
+        print("Searching in", self.trace_dir)
+        nbr_files = e.count_files_in_directory(self.trace_dir, ".*")
 
         self.assertEqual(
             nbr_files,
@@ -65,26 +66,27 @@ class TestProcessing(unittest.TestCase):
             f"{nbr_files} number of timeseries files <-> {nbr_landcells} number of land cells"
         )
 
+    # ## TODO do monkeypatching or similar to imitate landmask, trace and timeseries files
+    # def test_occurrence_empty_files(self):
+    #     """
+    #     test if empty temporary files were created
+    #     """
+    #     ## ckeck for empty trace or timeseries file
+    #     ts_files = self.ts_dir.rglob("*.h5")
 
-    def test_occurrence_empty_files(self):
-        """
-        test if empty temporary files were created
-        """
-        ## ckeck for empty trace or timeseries file
-        ts_files = self.ts_dir.rglob("*.h5")
+    #     trace_dir = self.ts_dir.parent / "traces"
+    #     trace_files = trace_dir.rglob("lon*")
 
-        assert all([os.stat(file).st_size != 0  for file in ts_files]),  f"empty files exists in {self.ts_dir}"
+    #     self.assertTrue(
+    #         all([os.stat(file).st_size != 0  for file in trace_files]),
+    #         f"empty file(s) exist in {trace_dir}"
+    #     )
+    #     self.assertTrue(
+    #         all([os.stat(file).st_size != 0  for file in ts_files]),
+    #         f"empty file(s) exist in {self.ts_dir}"
+    #     )
 
-        trace_dir = self.ts_dir.parent / "traces"
-        trace_files = trace_dir.rglob("lon*")
-
-        self.assertTrue(
-            all([os.stat(file).st_size != 0  for file in trace_files]),
-            f"empty file(s) exist in {trace_dir}"
-        )
-
-
-
+    # ## TODO do monkeypatching or similar 
     def test_number_failing_cells(self):
         """
         test if processing of cells failed
