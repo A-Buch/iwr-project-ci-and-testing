@@ -48,8 +48,8 @@ jobs:
     # use this only for windows run
     - name: greetings f powershell
       if: runner.os == 'Windows' # only if its runner.os and in 'xx'
-        shell: pwsh
-        run: Write-Host "Hi"
+      shell: pwsh
+      run: Write-Host "Hi"
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
