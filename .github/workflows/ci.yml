@@ -91,6 +91,7 @@ jobs:
 
       run: |
         pip install poetry
+        pip install -e .
         python -m conda install -r requirements-dev.txt
         python -m pip install .[tests]
 
