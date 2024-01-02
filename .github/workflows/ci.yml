@@ -88,11 +88,10 @@ jobs:
         #
         #         python -m poetry install -r poetry.lock  # cant install module poetry 
         #         pip install -e .
-
+        #         python -m conda install -r requirements-dev.txt
       run: |
         pip install poetry
         pip install -e .
-        python -m conda install -r requirements-dev.txt
         python -m pip install .[tests]
 
     # pip install -e .
