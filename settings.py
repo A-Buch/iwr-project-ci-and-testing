@@ -16,7 +16,7 @@ if user == "annabu":
 elif user == "root":
     data_dir = "/mnt/c/Users/Anna/Documents/UNI/HiWi/IWRcourses_PY_ML_meetings/effective_software_testing/iwr-project-ci-and-testing/demo_input"
     log_dir = "./log"
-    output_dir = Path("/mnt/c/Users/Anna/Documents/UNI/HiWi/IWRcourses_PY_ML_meetings/effective_software_testing/iwr-project-ci-and-testing/demo_output") # tile 00002 00006 00007 00008
+    output_dir = Path("/mnt/c/Users/Anna/Documents/UNI/HiWi/IWRcourses_PY_ML_meetings/effective_software_testing/iwr-project-ci-and-testing/demo_output")
 
 
 # for example "GSWP3", "GSWP3-W5E5"
@@ -106,7 +106,7 @@ def decorate_init_logger(func):
         # Log file handler
         log_file = "./log/log_warning.log"
         print(f"Creating separate log file {log_file} for warning message")
-        if not os.path.exists(log_file):             
+        if not os.path.exists(log_file):
             open(log_file, "w+").close()
 
         return logger
@@ -118,7 +118,7 @@ def decorate_init_logger(func):
 def init_logger(name):
     """
     Set up a logger instance
-    name (str): Name of logger 
+    name (str): Name of logger
     log_file (str): path to log file
     """
     logger = logging.getLogger(name)
@@ -132,7 +132,7 @@ def init_logger(name):
     streamhandler = logging.StreamHandler()
     streamhandler.setLevel(logging.INFO)
     streamhandler.setFormatter(formatter)
-    if not logger.handlers: 
+    if not logger.handlers:
         logger.addHandler(streamhandler)
 
     return logger

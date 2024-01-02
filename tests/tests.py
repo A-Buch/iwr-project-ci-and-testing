@@ -9,9 +9,9 @@ import xarray as xr
 import unittest
 
 sys.path.append("../") # search within parent dir of tests_folder
-import attrici.postprocess as pp
-import sanity_check.estimation_quality_check as e
-import settings as s
+import attrici.postprocess as pp # noqa: E402
+import sanity_check.estimation_quality_check as e # noqa: E402
+import settings as s # noqa: E402
 
 
 ## get logger
@@ -29,7 +29,7 @@ class TestPostprocess(unittest.TestCase):
         coord_list = np.array([62.39166667, 62.375, 62.35833333])
         coord_list_shuffled =  np.array([ 62.375, 62.35833333, 62.39166667])
         coord_list_negative =  np.array([-62.39166667, -62.375, 62.35833333])
-        
+
         assert pp.rescale_aoi(coord_list, 62.375) == [1]
         assert pp.rescale_aoi(coord_list_shuffled, 62.375) == [0]
         assert pp.rescale_aoi(coord_list_negative, -62.375) == [1]
@@ -71,10 +71,10 @@ class TestProcessing(unittest.TestCase):
         test if empty temporary files were created
         """
         ## ckeck for empty trace or timeseries file
-        ts_files = self.ts_dir.rglob(f"*.h5")
+        ts_files = self.ts_dir.rglob("*.h5")
 
         assert all([os.stat(file).st_size != 0  for file in ts_files]),  f"empty files exists in {self.ts_dir}"
-        
+
         trace_dir = self.ts_dir.parent / "traces"
         trace_files = trace_dir.rglob("lon*")
 
@@ -103,6 +103,5 @@ class TestProcessing(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     unittest.main()
     print("Run all tests")
