@@ -1,5 +1,6 @@
 [tool.poetry]
-name = "iwr_project_attrici"
+name = "attrici"
+## name = "iwr_project_attrici"
 version = "0.0.1"
 description = "CI and automated testing integration for attrici, IWR project"
 authors = ["Anna Buch <a.buch@stud.uni-heidelberg.de>"]
@@ -39,11 +40,11 @@ ignore = ["C901", "E714", "I001"]
 exclude = [".venv", ".json", ".ipynb", "versioneer.py"]
 line-length = 150  # Same as Black
 
-#[tool.ruff.per-file-ignores] #  "N",  # pep8-nameing
-#"path/to/file.py" = [
+# [tool.ruff.per-file-ignores] #  "N",  # pep8-nameing
+# "path/to/file.py" = [
 #    "Nxx",
 #    "Nxx",
-#]
+# ]
 
 [build-system]
 requires = ["poetry-core"]
