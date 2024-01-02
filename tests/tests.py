@@ -48,14 +48,14 @@ class TestProcessing(unittest.TestCase):
         # self.trace_dir = Path(f"{s.output_dir}/traces/{self.variable}")
         self.ts_dir = Path(f"demo_output/timeseries/{self.variable}")  # TODO fix workaround with outpaths to test unittests in CI
         self.trace_dir = self.ts_dir.parent / "traces" / f"{self.variable}"
+        self.lsm_file = f"demo_input/ERA5/{self.tile}/landmask_{self.tile}_demo.nc"
 
 
     def test_number_files_equals_number_landcells(self):
         """
         test if enough land-cells were processed by comparing number of files with number of land cells
         """
-        lsm_file = s.input_dir / f"landmask_{self.tile}_demo.nc"
-        lsm = xr.load_dataset(lsm_file)
+        lsm = xr.load_dataset(self.lsm_file)
         nbr_landcells = lsm["area_European_01min"].count().values.tolist()
         print(f"Tile: {self.tile}, Variable: {self.variable, self.variable_hour}: {nbr_landcells} Land cells in lsm")
 
