@@ -23,8 +23,6 @@ def main():
 
     tile = args.tile 
     variable_hour = args.variable_hour  #e.g tas0 or hurs
-    variable = ''.join(i for i in variable_hour if not i.isdigit())
- 
  
     ## check if enough land-cells were processed by comparing number of files with number of land cells
     lsm_file = s.input_dir / f"landmask_{tile}.nc"

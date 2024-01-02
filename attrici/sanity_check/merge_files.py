@@ -28,9 +28,6 @@ def merge_files(in_dir, out_file):
     Mege trace files into single netcdf
     in_dir (str): folder path to file which should be merged to nc
     """
-    # Write single trace files to netcdf
-    parameter_files = []
-
     for file in in_dir.glob("**/*lon*"):
         lat = get_float_from_string(file.parent.name)
         lon = get_float_from_string(file.stem.split("lon")[-1])
@@ -61,7 +58,7 @@ def merge_files(in_dir, out_file):
         try:
             with open(out_file, 'ab+') as f:
                 pickle.dump(xr.merge(data_vars), f, protocol=pickle.HIGHEST_PROTOCOL)
-        except:
+        except Exception:
             with open(out_file, 'wb') as f:
                 pickle.dump(xr.merge(data_vars), f, protocol=pickle.HIGHEST_PROTOCOL)
     print("Wrote merged traces to: ", out_file) 
@@ -80,7 +77,7 @@ def main():
     variable = ''.join(i for i in variable_hour if not i.isdigit())
 
     in_dir = Path(f"/p/tmp/dominikp/attrici/{tile}/attrici_03_era5_t{tile}_{variable_hour}_rechunked/traces/{variable}")
-    print("Searching in",in_dir)
+    print("Searching in", in_dir)
  
     ## merge trace files and store as single pickle
     tile = re.findall(r"\d{5}", str(in_dir)) [0]
@@ -92,7 +89,7 @@ def main():
     
     if not out_file.is_file(): # if out_file couldnt be created, trace files are stored in tmp folder
         in_dir = Path(f"/p/tmp/annabu/projects/attrici/output/{tile}/attrici_03_era5_t{tile}_{variable_hour}_rechunked/traces/{variable}")   
-        print("Searching in",in_dir)
+        print("Searching in", in_dir)
         out_file = in_dir.parent.parent / f"{filename}.pickle" 
         out_file.unlink(missing_ok=True)  #  overwrite file in folder if exists
         merge_files(in_dir, out_file)   

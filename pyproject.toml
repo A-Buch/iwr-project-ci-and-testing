@@ -42,9 +42,8 @@ exclude = [".venv", ".json", ".ipynb", "versioneer.py"]
 line-length = 150  # Same as Black
 
 [tool.ruff.per-file-ignores] #  "N",  # pep8-nameing
-    "tests/tests.py" = [
-        "E402"
-]
+"tests/tests.py" = ["E402"]
+"attrici/sanity_check/visual_check.py" = ["E501"]
 
 [build-system]
 requires = ["poetry-core"]
