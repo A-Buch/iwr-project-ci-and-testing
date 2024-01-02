@@ -85,8 +85,9 @@ jobs:
     - name: Install Python packages
      # run: |
         #python -m conda install -r requirements-dev.txt
-        #
-        #         pip install poetry
+        #         pip install poetry  # Failed to build iwr-project-attrici
+                                      # ERROR: Could not build wheels for iwr-project-attrici, 
+                                      # which is required to install pyproject.toml-based projects
 
       run: |
         pip install -e .
@@ -94,8 +95,6 @@ jobs:
         python -m pip install .[tests]
 
     # pip install -e .
-    # pip install flake8  
-    # flake8 = # for code formating
 
     # - name: Run Python tests 
       # working-directory: ./tests
