@@ -66,8 +66,9 @@ jobs:
 
 
     - name: Run Python tests for jupyter notebooks via --nbval
+      working-directory: ./tests
       run: |
-        python -m pytest --nbval
+        python -m pytest tests.py --nbval
         echo No test errors # functional github action
 
 
