@@ -65,7 +65,7 @@ jobs:
     #         python -m pip install .[tests]
 
 
-    - name: Run Python tests
+    - name: Run Python tests for jupyter notebooks via --nbval
       run: |
         python -m pytest --nbval
         echo No test errors # functional github action
