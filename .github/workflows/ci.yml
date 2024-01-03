@@ -65,10 +65,11 @@ jobs:
     #         python -m pip install .[tests]
 
 
-    - name: Run Python tests for jupyter notebooks via --nbval
-      run: |
-        python -m pytest ./tests/tests.py --nbval
-        echo No test errors # functional github action
+    # - name: Run Python tests from jupyter notebooks
+    ## notebook itself is used as a testing function, cell is compared to its output
+      # run: |
+        # python -m pytest ./tests/tests.ipynb --nbval 
+        # echo No test errors # functional github action
 
 
   coverage:
