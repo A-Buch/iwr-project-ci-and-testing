@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
+# unit and integration tests # TODO split both types of testing into sepeate files
+
 import sys
 import os
 from pathlib import Path
+from datetime import datetime
 import numpy as np
+import pandas as pd
 import xarray as xr
 import unittest
 
 sys.path.append("../") # search within parent dir of tests_folder
+from attrici import estimator as est
 import attrici.postprocess as pp
 import attrici.sanity_check.estimation_quality_check as e
 import settings as s
@@ -18,6 +23,38 @@ import settings as s
 # logger = s.init_logger("__test__")  # TODO replace print statement by logger message
 
 ## NOTE run single unittest in cell of jupyter nb: unittest.main(argv=[''], verbosity=2, exit=False)
+
+
+
+class TestEstimator(unittest.TestCase):
+    """
+    test class Estimator
+    """
+    def setUp(self):
+
+        ## create test input data
+        self.df = pd.DataFrame(  
+            [[ "1950-01-01 18:00:00", 0.000000, np.nan, np.nan, 286.589599, 0.012038], 
+            [ "1950-01-02 18:00:00", 0.000039, np.nan, np.nan, 286.589604, 0.012042], 
+            [ "1950-01-03 18:00:00", 0.000077, np.nan, np.nan, 286.589609, 0.012047]],
+            columns = ["ds", "t", "y", "y_scaled", "gmt", "gmt_scaled"]
+        )
+        self.sp_lat = 62.39166666666668
+        self.sp_lon = 21.258333
+        self.TIME0 = datetime.now()
+
+        self.estimator = est.estimator(s)         ## call class to test
+
+
+        def test_estimate_parameters(self):
+            """
+            integration test for estimate_parameters() from Class Estimator
+            """
+            est_df = self.estimator.estimate_parameters(self.df, self.sp["lat"], self.sp["lon"], s.map_estimate, self.TIME0)[0]  # method to test
+            self.assertEqual(
+                    str(est_df.loc[[1]].values),   # to test
+                    "[[Timestamp('1950-01-03 18:00:00') 3.856239395341663e-05 nan nan\n  286.58960399933363 0.01204237927923181]]" # reference
+            )
 
 
 class TestPostprocess(unittest.TestCase):
@@ -35,7 +72,7 @@ class TestPostprocess(unittest.TestCase):
         assert pp.rescale_aoi(coord_list_negative, -62.375) == [1]
 
 
-class TestProcessing(unittest.TestCase):
+class TestOutputRunEstimation(unittest.TestCase):
     """
     test class for temporary output from run_estimation.py() and write_netcdf.py()
     """
