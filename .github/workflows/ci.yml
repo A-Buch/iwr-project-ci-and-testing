@@ -31,8 +31,7 @@ jobs:
       #fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        python-version: 
-            - 3.9.6
+        python-version:
             - 3.10.11
             - 3.12.0
     runs-on: ${{ matrix.os }}
@@ -103,7 +102,7 @@ jobs:
 
     - name: Run Python tests [pytest]
       working-directory: ./tests
+        #         poetry run pytest tests.py
       run: |
-        poetry run pytest tests.py
         python -m pytest tests.py
         echo No test errors for tests.py
