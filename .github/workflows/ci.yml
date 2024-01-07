@@ -31,7 +31,7 @@ jobs:
       #fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        python-version: [3.10.11]
+        python-version: [3.9.6, 3.10.11, 3.12.0]
     runs-on: ${{ matrix.os }}
     name: Testing on "${{matrix.os}}", Python "${{matrix.python-version}}" # each job needs a name - mandatory
 
