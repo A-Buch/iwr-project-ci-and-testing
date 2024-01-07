@@ -61,10 +61,10 @@ jobs:
     - name: Install Python packages
       run: |
         pip install pytest
-        python -m pip install .[tests]
         echo installed pytest and test files
     #    pip install poetry
     #    pip install -e .
+    #    python -m pip install .[tests]
 
 
     # - name: Run Python tests from jupyter notebooks
