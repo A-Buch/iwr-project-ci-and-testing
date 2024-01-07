@@ -88,7 +88,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install Python packages with poetry and pytest
+    - name: Install Python packages with poetry, set up development env
      # run: |
         #
         #         python -m poetry install -r poetry.lock  # cant install module poetry 
@@ -102,7 +102,7 @@ jobs:
 
     - name: Run Python tests [pytest]
       working-directory: ./tests
-        #         poetry run pytest tests.py
-      run: |
-        python -m pytest tests.py
+        #         python -m pytest tests.py
+      run: |    # flags:-v increase verbosity, -m : run marked test (marked with @pytest.mark.marked_test)
+        poetry run pytest -v tests.py
         echo No test errors for tests.py
