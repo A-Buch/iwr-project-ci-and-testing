@@ -46,15 +46,15 @@ class TestEstimator(unittest.TestCase):
         self.estimator = est.estimator(s)         ## call class to test
 
 
-        def test_estimate_parameters(self):
-            """
-            integration test for estimate_parameters() from Class Estimator
-            """
-            est_df = self.estimator.estimate_parameters(self.df, self.sp["lat"], self.sp["lon"], s.map_estimate, self.TIME0)[0]  # method to test
-            self.assertEqual(
-                    str(est_df.loc[[1]].values),   # to test
-                    "[[Timestamp('1950-01-03 18:00:00') 3.856239395341663e-05 nan nan\n  286.58960399933363 0.01204237927923181]]" # reference
-            )
+    def test_estimate_parameters(self):
+        """
+        integration test for estimate_parameters() from Class Estimator
+        """
+        est_df = self.estimator.estimate_parameters(self.df, self.sp["lat"], self.sp["lon"], s.map_estimate, self.TIME0)[0]  # method to test
+        self.assertEqual(
+                str(est_df.loc[[1]].values),   # to test
+                "[[Timestamp('1950-01-03 18:00:00') 3.856239395341663e-05 nan nan\n  286.58960399933363 0.01204237927923181]]" # reference
+        )
 
 
 class TestPostprocess(unittest.TestCase):
