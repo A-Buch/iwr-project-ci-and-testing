@@ -9,15 +9,6 @@ on:
   pull_request:
     branches:
     - main
-  # as well as upon manual triggers through the 'Actions' tab of the Github UI
-  #workflow_dispatch:
-    # periodical run
-    # schedule:
-        # - cron: "0 5 * * 1" # 5.00 am, every day, weekday So-Sa, Monday
-
-#  ubuntu-latest 
-
-
 
 jobs:
   ruff:
@@ -62,16 +53,6 @@ jobs:
       run: |
         pip install pytest
         echo installed pytest and test files
-    #    pip install poetry
-    #    pip install -e .
-    #    python -m pip install .[tests]
-
-
-    # - name: Run Python tests from jupyter notebooks
-    ## notebook itself is used as a testing function, cell is compared to its output
-      # run: |
-        # python -m pytest ./tests/tests.ipynb --nbval 
-        # echo No test errors # functional github action
 
 
   coverage:  # TODO get definiton of coverage for CI, jobs -> coverage
@@ -88,21 +69,14 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install Python packages with poetry, set up development env
-     # run: |
-        #
-        #         python -m poetry install -r poetry.lock  # cant install module poetry 
-        #         python -m conda install -r requirements-dev.txt
-        
-        #         pip install -e .
-        #         python -m pip install .[tests]
+    - name: Install Python packages with poetry, set up development env from pyproject.toml and peotry.lock
       run: |
         pip install poetry
         poetry install
+        echo 
 
     - name: Run Python tests [pytest]
       working-directory: ./tests
-        #         python -m pytest tests.py
-      run: |    # flags:-v increase verbosity, -m : run marked test (marked with @pytest.mark.marked_test)
+      run: |    # pytest flags:-v increase verbosity, -m : run only marked test (marked with @pytest.mark.marked_test)
         poetry run pytest -v tests.py
         echo No test errors for tests.py
