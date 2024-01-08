@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-# unit and integration tests # TODO split both types of testing into sepeate files
+# unit and integration tests
 
 import sys
 import os
@@ -13,17 +13,20 @@ import xarray as xr
 import unittest
 
 sys.path.append("../") # search within parent dir of tests_folder
-from attrici import estimator as est
 import attrici.postprocess as pp
 import attrici.sanity_check.estimation_quality_check as e
+import attrici.estimator as est
+
 import settings as s
+
+# estimator = est.estimator(s)         ## call class to test
 
 
 ## get logger
-# logger = s.init_logger("__test__")  # TODO replace print statement by logger message
+# logger = s.init_logger("__test__")  # TODO impl logger message in tests
 
-## NOTE run single unittest in cell of jupyter nb: unittest.main(argv=[''], verbosity=2, exit=False)
-
+## NOTE run single unittest in cell of jupyter nb: unittest.main(argv=[''], verbosity=2, exit=False), 
+## run in bash: > python -m unittest tests/tests.py 
 
 
 class TestEstimator(unittest.TestCase):
@@ -50,9 +53,10 @@ class TestEstimator(unittest.TestCase):
         """
         integration test for estimate_parameters() from Class Estimator
         """
-        est_df = self.estimator.estimate_parameters(self.df, self.sp["lat"], self.sp["lon"], s.map_estimate, self.TIME0)[0]  # method to test
+        est_df = self.estimator.estimate_parameters(self.df, self.sp_lat, self.sp_lon, s.map_estimate, self.TIME0)[0]  # method to test
+        print(est_df.loc[[1]].values)
         self.assertEqual(
-                str(est_df.loc[[1]].values),   # to test
+                est_df.loc[[1]].values,   # to test
                 "[[Timestamp('1950-01-03 18:00:00') 3.856239395341663e-05 nan nan\n  286.58960399933363 0.01204237927923181]]" # reference
         )
 
