@@ -37,9 +37,9 @@ class TestEstimator(unittest.TestCase):
 
         ## create test input data
         self.df = pd.DataFrame(  
-            [[ "1950-01-01 18:00:00", 0.000000, np.nan, np.nan, 286.589599, 0.012038], 
-            [ "1950-01-02 18:00:00", 0.000039, np.nan, np.nan, 286.589604, 0.012042], 
-            [ "1950-01-03 18:00:00", 0.000077, np.nan, np.nan, 286.589609, 0.012047]],
+           [[ datetime.strptime("1950-01-01 18:00:00", "%Y-%m-%d %H:%M:%S"), 0.000000, np.nan, np.nan, 286.589599, 0.012038], 
+            [ datetime.strptime("1950-01-02 18:00:00", "%Y-%m-%d %H:%M:%S"), 0.000039, np.nan, np.nan, 286.589604, 0.012042], 
+            [ datetime.strptime("1950-01-03 18:00:00", "%Y-%m-%d %H:%M:%S"), 0.000077, np.nan, np.nan, 286.589609, 0.012047]],
             columns = ["ds", "t", "y", "y_scaled", "gmt", "gmt_scaled"]
         )
         self.sp_lat = 62.39166666666668
