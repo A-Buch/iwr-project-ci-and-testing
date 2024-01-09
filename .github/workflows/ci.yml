@@ -73,10 +73,10 @@ jobs:
       run: |
         pip install poetry
         poetry install
-        echo 
+        echo installing poetry
 
     - name: Run Python tests [pytest]
       working-directory: ./tests
       run: |    # pytest flags:-v increase verbosity, -m : run only marked test (marked with @pytest.mark.marked_test)
         poetry run pytest -v tests.py
-        echo No test errors for tests.py
+        echo checking for test errors via tests.py

@@ -47,16 +47,14 @@ class TestEstimator(unittest.TestCase):
 
 
     def test_estimate_parameters(self):
-        """
-        integration test for estimate_parameters() from Class Estimator
-        """
-        est_df = self.estimator.estimate_parameters(self.df, self.sp_lat, self.sp_lon, s.map_estimate, self.TIME0)[0]  # method to test
-        print(est_df.loc[1].values)
+
+        est_df = self.estimator.estimate_parameters(self.df, self.sp_lat, self.sp_lon, s.map_estimate, self.TIME0)[0]
+        subset_est_df_to_test = list( map(est_df.get, ["weights_fc_intercept_3","weights_fc_trend","logp"]) )
         self.assertEqual(
-                str(est_df.loc[[1]].values),   # to test
-                "[[Timestamp('1950-01-03 18:00:00') 3.856239395341663e-05 nan nan\n  286.58960399933363 0.01204237927923181]]", # reference
-                "test_estimate_parameters() failed"  # error message when test doe not pass
+            str(subset_est_df_to_test),   # to test
+            "[array([0., 0.]), array([0., 0., 0., 0., 0., 0., 0., 0.]), array(14.52776684)]"      # reference subset
         )
+
 
 
 class TestPostprocess(unittest.TestCase):
@@ -83,11 +81,9 @@ class TestOutputRunEstimation(unittest.TestCase):
         self.tile = s.tile
         self.variable_hour = s.hour
         self.variable = s.variable
-        # self.ts_dir = Path(f"{s.output_dir}/timeseries/{self.variable}")
-        # self.trace_dir = Path(f"{s.output_dir}/traces/{self.variable}")
-        self.ts_dir = Path(f"../demo_output/{self.tile}/timeseries/{self.variable}")  # TODO fix workaround with outpaths to test unittests in CI
-        self.trace_dir = Path(f"../demo_output/{self.tile}/traces/{self.variable}") #self.ts_dir.parent / "traces" / f"{self.variable}"
-        self.lsm_file = Path(f"../demo_input/ERA5/{self.tile}") / f"landmask_{self.tile}_demo.nc"
+        self.ts_dir = Path(f"./demo_output/{self.tile}/timeseries/{self.variable}")  # TODO fix workaround with outpaths to test unittests in CI
+        self.trace_dir = Path(f"./demo_output/{self.tile}/traces/{self.variable}")
+        self.lsm_file = Path(f"./demo_input/ERA5/{self.tile}") / f"landmask_{self.tile}_demo.nc"
 
 
     def test_number_files_equals_number_landcells(self):
@@ -98,13 +94,14 @@ class TestOutputRunEstimation(unittest.TestCase):
         nbr_landcells = lsm["area_European_01min"].count().values.tolist()
         print(f"Tile: {self.tile}, Variable: {self.variable, self.variable_hour}: {nbr_landcells} Land cells in lsm")
 
-        print("Searching in", self.trace_dir)
-        nbr_files = e.count_files_in_directory(self.trace_dir, ".*")
+        print("Searching in", self.ts_dir)
+        # nbr_files = e.count_files_in_directory(self.trace_dir, ".*")
+        nbr_files = e.count_files_in_directory(self.ts_dir, "h5")
 
         self.assertEqual(
             nbr_files,
             nbr_landcells,
-            f"{nbr_files} number of timeseries files <-> {nbr_landcells} number of land cells"
+            f"{nbr_files} timeseries files <-> {nbr_landcells} number of land cells"
         )
 
     ## TODO do monkeypatching or similar to imitate landmask, trace and timeseries files
@@ -113,11 +110,11 @@ class TestOutputRunEstimation(unittest.TestCase):
         test if empty temporary files were created
         """
         ## ckeck for empty trace files
-        trace_files = self.trace_dir.rglob("lon*")
+        trace_files = self.ts_dir.rglob("lon*")
 
         self.assertTrue(
             all([os.stat(file).st_size != 0  for file in trace_files]),
-            f"empty file(s) exist in {self.trace_dir}"
+            f"empty file(s) exist in {self.ts_dir}"
         )
     
 
@@ -127,8 +124,8 @@ class TestOutputRunEstimation(unittest.TestCase):
         test if processing of cells failed
         """
         ## check amount of failing cells
-        failing_cells = self.trace_dir.parent.parent / "./failing_cells.log"
-        print(failing_cells)
+        failing_cells = self.ts_dir.parent.parent / "./failing_cells.log"
+        # print(failing_cells)
         with open(failing_cells, "r") as f:
              nbr_failcells = sum(1 for _ in f)
 

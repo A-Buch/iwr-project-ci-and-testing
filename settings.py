@@ -5,19 +5,23 @@ import logging
 import functools
 
 # user = getpass.getuser()
-user = "root"  # TODO run GithubActions by setting username e.g. "root"
+# user = "root"  # TODO run GithubActions by setting username e.g. "root"
 
 # this will hopefully avoid hand editing paths everytime.
 # fill further for convenience.
-if user == "annabu":
-    data_dir = "/p/projects/ou/rd3/dmcci/basd_era5-land_to_efas-meteo/"
-    log_dir = "./log"
-    output_dir = Path("/p/tmp/annabu/projects/attrici/output")
+# if user == "annabu":
+#     data_dir = "/p/projects/ou/rd3/dmcci/basd_era5-land_to_efas-meteo/"
+#     log_dir = "./log"
+#     output_dir = Path("/p/tmp/annabu/projects/attrici/output")
 
-elif user == "root":
-    data_dir = "/mnt/c/Users/Anna/Documents/UNI/HiWi/IWRcourses_PY_ML_meetings/effective_software_testing/iwr-project-ci-and-testing/demo_input"
-    log_dir = "./log"
-    output_dir = Path("/mnt/c/Users/Anna/Documents/UNI/HiWi/IWRcourses_PY_ML_meetings/effective_software_testing/iwr-project-ci-and-testing/demo_output") # noqa: E501
+# elif user == "root":
+#     data_dir = "/mnt/c/Users/Anna/Documents/UNI/HiWi/IWRcourses_PY_ML_meetings/effective_software_testing/iwr-project-ci-and-testing/demo_input"
+#     log_dir = "./log"
+#     output_dir = Path("/mnt/c/Users/Anna/Documents/UNI/HiWi/IWRcourses_PY_ML_meetings/effective_software_testing/iwr-project-ci-and-testing/demo_output") # noqa: E501
+
+data_dir = "/mnt/c/Users/Anna/Documents/UNI/HiWi/IWRcourses_PY_ML_meetings/effective_software_testing/iwr-project-ci-and-testing/demo_input"
+log_dir = "./log"
+output_dir = Path("/mnt/c/Users/Anna/Documents/UNI/HiWi/IWRcourses_PY_ML_meetings/effective_software_testing/iwr-project-ci-and-testing/demo_output") # noqa: E501
 
 
 # for example "GSWP3", "GSWP3-W5E5"
