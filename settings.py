@@ -19,10 +19,10 @@ import functools
 #     log_dir = "./log"
 #     output_dir = Path("/mnt/c/Users/Anna/Documents/UNI/HiWi/IWRcourses_PY_ML_meetings/effective_software_testing/iwr-project-ci-and-testing/demo_output") # noqa: E501
 
-data_dir = "/mnt/c/Users/Anna/Documents/UNI/HiWi/IWRcourses_PY_ML_meetings/effective_software_testing/iwr-project-ci-and-testing/demo_input"
+## load test input data
+data_dir = "./tests/test_data/demo_input"
 log_dir = "./log"
-output_dir = Path("/mnt/c/Users/Anna/Documents/UNI/HiWi/IWRcourses_PY_ML_meetings/effective_software_testing/iwr-project-ci-and-testing/demo_output") # noqa: E501
-
+output_dir = Path("./tests/test_data/demo_output") # noqa: E501
 
 # for example "GSWP3", "GSWP3-W5E5"
 dataset = "ERA5"
