@@ -25,8 +25,9 @@ import settings as s
 ## NOTE run single unittest in cell of jupyter nb: unittest.main(argv=[''], verbosity=2, exit=False)
 
 ## overwrite filepaths from settings
-s.input_dir = Path("../demo_input/")
-s.output_dir = Path("../demo_output/")
+s.data_dir = Path("./test_data/")
+s.input_dir = Path(f"{s.data_dir}/demo_input/")
+s.output_dir = Path(f"{s.data_dir}/demo_output/")
 
 
 class TestEstimator(unittest.TestCase):
@@ -86,9 +87,9 @@ class TestOutputRunEstimation(unittest.TestCase):
         self.tile = s.tile
         self.variable_hour = s.hour
         self.variable = s.variable
-        self.ts_dir = Path(f"./demo_output/{self.tile}/timeseries/{self.variable}")  # TODO fix imitate input files isntead of using test input data
-        self.trace_dir = Path(f"./demo_output/{self.tile}/traces/{self.variable}")
-        self.lsm_file = Path(f"./demo_input/ERA5/{self.tile}") / f"landmask_{self.tile}_demo.nc"
+        self.ts_dir = Path(f"./test_data/demo_output/{self.tile}/timeseries/{self.variable}")  # TODO fix imitate input files isntead of using test input data
+        self.trace_dir = Path(f"./test_data/demo_output/{self.tile}/traces/{self.variable}")
+        self.lsm_file = Path(f"./test_data/demo_input/ERA5/{self.tile}") / f"landmask_{self.tile}_demo.nc"
 
 
     def test_number_files_equals_number_landcells(self):
