@@ -87,7 +87,8 @@ class TestOutputRunEstimation(unittest.TestCase):
         self.tile = s.tile
         self.variable_hour = s.hour
         self.variable = s.variable
-        self.ts_dir = Path(f"./test_data/demo_output/{self.tile}/timeseries/{self.variable}")  # TODO fix imitate input files isntead of using test input data
+        # TODO fix imitate input files isntead of using test input data
+        self.ts_dir = Path(f"./test_data/demo_output/{self.tile}/timeseries/{self.variable}")
         self.trace_dir = Path(f"./test_data/demo_output/{self.tile}/traces/{self.variable}")
         self.lsm_file = Path(f"./test_data/demo_input/ERA5/{self.tile}") / f"landmask_{self.tile}_demo.nc"
 
