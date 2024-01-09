@@ -81,9 +81,9 @@ class TestOutputRunEstimation(unittest.TestCase):
         self.tile = s.tile
         self.variable_hour = s.hour
         self.variable = s.variable
-        self.ts_dir = Path(f"./demo_output/{self.tile}/timeseries/{self.variable}")  # TODO fix workaround with outpaths to test unittests in CI
-        self.trace_dir = Path(f"./demo_output/{self.tile}/traces/{self.variable}")
-        self.lsm_file = Path(f"./demo_input/ERA5/{self.tile}") / f"landmask_{self.tile}_demo.nc"
+        self.ts_dir = Path(f"../demo_output/{self.tile}/timeseries/{self.variable}")  # TODO fix workaround with outpaths to test unittests in CI
+        self.trace_dir = Path(f"../demo_output/{self.tile}/traces/{self.variable}")
+        self.lsm_file = Path(f"../demo_input/ERA5/{self.tile}") / f"landmask_{self.tile}_demo.nc"
 
 
     def test_number_files_equals_number_landcells(self):
