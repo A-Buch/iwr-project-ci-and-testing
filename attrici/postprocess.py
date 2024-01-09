@@ -1,10 +1,12 @@
 import shutil
-import numpy as np
-import pandas as pd
 import subprocess
 from datetime import datetime
+
 import netCDF4 as nc
-import math
+import xarray as xr
+import numpy as np
+import pandas as pd
+
 
 def read_from_disk(data_path):
 
@@ -21,6 +23,7 @@ def read_from_disk(data_path):
 def form_global_nc(ds, time, lat, lon, vnames, torigin):
 
     # FIXME: can be deleted once merge_cfact is fully replaced by write_netcdf
+
     ds.createDimension("time", None)
     ds.createDimension("lat", lat.shape[0])
     ds.createDimension("lon", lon.shape[0])
@@ -28,17 +31,14 @@ def form_global_nc(ds, time, lat, lon, vnames, torigin):
     times = ds.createVariable("time", "f8", ("time",))
     longitudes = ds.createVariable("lon", "f8", ("lon",))
     latitudes = ds.createVariable("lat", "f8", ("lat",))
-    if vnames == None:
-        pass 
-    else:  
-        for var in vnames:
-            data = ds.createVariable(
-                var,
-                "f4",
-                ("time", "lat", "lon"),
-                chunksizes=(time.shape[0], 1, 1),
-                fill_value=1e20,
-            )
+    for var in vnames:
+        ds.createVariable(
+            var,
+            "f4",
+            ("time", "lat", "lon"),
+            chunksizes=(time.shape[0], 1, 1),
+            fill_value=1e20,
+        )
     times.units = torigin
     latitudes.units = "degree_north"
     latitudes.long_name = "latitude"
@@ -54,14 +54,19 @@ def form_global_nc(ds, time, lat, lon, vnames, torigin):
 
 def rechunk_netcdf(ncfile, ncfile_rechunked):
 
+    ncfile_lat = len(xr.open_dataset(ncfile).lat)
+    ncfile_lon = len(xr.open_dataset(ncfile).lon)
+
     TIME0 = datetime.now()
 
     try:
         cmd = (
-            "ncks -4 -O --deflate 5 "
-            + "--cnk_plc=g3d --cnk_dmn=lat,360 --cnk_dmn=lon,720 "
-            + str(ncfile)
-            + " "
+            "ncks -4 -O --deflate 5 " \
+            + "--cnk_plc=g3d --cnk_dmn=lat,"+ str(ncfile_lat) \
+            + " --cnk_dmn=lon," + str(ncfile_lon) \
+            + " " \
+            + str(ncfile) \
+            + " " \
             + ncfile_rechunked
         )
         print(cmd)
@@ -71,9 +76,19 @@ def rechunk_netcdf(ncfile, ncfile_rechunked):
         print(cmd)
         subprocess.check_call(cmd, shell=True)
 
-    print("Rechunking took {0:.1f} minutes.".format((datetime.now() - TIME0).total_seconds() / 60))
+    print(
+        "Rechunking took {0:.1f} minutes.".format(
+            (datetime.now() - TIME0).total_seconds() / 60
+        )
+    )
 
     return ncfile_rechunked
+
+
+def rescale_aoi(outfile_variables_coord, coord):
+
+    coord_idx = (np.abs(outfile_variables_coord - coord)).argmin()
+    return coord_idx
 
 
 def replace_nan_inf_with_orig(variable, source_file, ncfile_rechunked):
@@ -81,7 +96,9 @@ def replace_nan_inf_with_orig(variable, source_file, ncfile_rechunked):
     ncfile_valid = ncfile_rechunked.rstrip(".nc4") + "_valid.nc4"
     shutil.copy(ncfile_rechunked, ncfile_valid)
 
-    print(f"Replace invalid values in {ncfile_rechunked} with original values from {source_file}")
+    print(
+        f"Replace invalid values in {ncfile_rechunked} with original values from {source_file}"
+    )
 
     ncs = nc.Dataset(source_file, "r")
     ncf = nc.Dataset(ncfile_valid, "a")
@@ -93,33 +110,22 @@ def replace_nan_inf_with_orig(variable, source_file, ncfile_rechunked):
     for ti in range(0,var.shape[0],chunklen):
         v = var[ti:ti+chunklen,:,:]
         v_orig = var_orig[ti:ti+chunklen,:,:]
-        logp = ncf['logp'][ti:ti+chunklen, :, :]
+        logp = ncf["logp"][ti:ti+chunklen, :, :]
         # This threshold for logp is to ensure that the model fits the data at all. It is mainly to catch values
         # for logp like -7000
         small_logp = logp < -300
         isinf = np.isinf(v)
         isnan = np.isnan(v)
-        print(f"{ti}: replace {isinf.sum()} inf values, {isnan.sum()} nan values and {small_logp.sum()} values with too small logp (<-300).")
+        print(
+            f"""{ti}: replace {isinf.sum()} inf values, \
+                {(np.isnan(v) & (~np.isnan(v_orig))).sum()} nan values and \
+                {small_logp.sum()} values with too small logp (<-300)."""
+        )
 
         v[isinf | isnan | small_logp] = v_orig[isinf | isnan | small_logp]
         var[ti:ti+v.shape[0],:,:] = v
 
     ncs.close()
     ncf.close()
+
     return ncfile_valid
-
-
-def rescale_aoi(coord_list):
-    '''
-    Rescales squared aoi, returns rescaled indices latitude or longitude
-    params:  
-        coord_list: list of lat or lon coordinates of the aoi
-        coord_float: float, latitude or longitude derived from timeseries filename
-    return: integer
-    '''
-    # Code modified based on: https://stackoverflow.com/questions/41037506/how-to-replace-values-by-their-position-in-the-ordered-list-of-values-using-nump
-    coord_indice = np.unique(coord_list,return_inverse=1)[1]
-
-    return coord_indice.tolist()
-
-

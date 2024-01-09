@@ -1,19 +1,15 @@
 #!/usr/bin/env python3
-
 # coding: utf-8
 
-import glob
-import itertools
+import re
+import subprocess
+from datetime import datetime
 from pathlib import Path
 
 import netCDF4 as nc
+import numpy as np
 import xarray as xr
 
-import numpy as np
-
-# import pandas as pd
-from datetime import datetime
-import subprocess
 import attrici
 import attrici.postprocess as pp
 import settings as s
@@ -21,35 +17,46 @@ import settings as s
 ### options for postprocess
 write_netcdf = True
 rechunk = True
-replace_invalid=True
+replace_invalid = True
 # cdo_processing needs rechunk
-cdo_processing = True
+cdo_processing = False
+
 
 # append later with more variables if needed
-vardict = {s.variable: "cfact", s.variable + "_orig": "y",
-        # "mu":"mu",
-        # "y_scaled": "y_scaled",
-        # "pbern": "pbern",
-        "logp": "logp"}
+vardict = {
+    s.variable: "cfact",
+    s.variable + "_orig": "y",
+    # "mu":"mu",
+    # "y_scaled": "y_scaled",
+    # "pbern": "pbern",
+    "logp": "logp",
+}
 
 cdo_ops = {
     # "monmean": "monmean ",
     "yearmean": "yearmean ",
     #    "monmean_valid": "monmean -setrtomiss,-1e20,1.1574e-06 -selvar,cfact,y",
-       # "yearmean_valid": "yearmean -setrtomiss,-1e20,1.1574e-06 -selvar,cfact,y",
+    # "yearmean_valid": "yearmean -setrtomiss,-1e20,1.1574e-06 -selvar,cfact,y",
     "trend": "trend ",
     # "mse": "timmean -expr,'squared_error=sqr(mu-y_scaled)'"
-       # "trend_valid": "trend -setrtomiss,-1e20,1.1574e-06 -selvar,cfact,y",
+    # "trend_valid": "trend -setrtomiss,-1e20,1.1574e-06 -selvar,cfact,y",
 }
 
 
+def get_float_from_string(file_name):
+    floats_in_string = re.findall(r"[-+]?(?:\d*\.*\d+)", file_name)
+    if len(floats_in_string) != 1:
+        raise ValueError("there is no or more than one float in this string")
+    return float(floats_in_string[0])
+
 TIME0 = datetime.now()
 
-source_file = Path(s.input_dir) / s.dataset / s.source_file.lower()
+source_file = Path(s.input_dir) / s.source_file
 ts_dir = s.output_dir / "timeseries" / s.variable
 cfact_dir = s.output_dir / "cfact" / s.variable
 cfact_file = cfact_dir / s.cfact_file
 cfact_rechunked = str(cfact_file).rstrip(".nc4") + "_rechunked.nc4"
+
 
 if write_netcdf:
 
@@ -58,19 +65,14 @@ if write_netcdf:
 
     ### check which data is available
     data_list = []
-    lat_indices = []
-    lon_indices = []
+    lat_float_list = []
+    lon_float_list = []
     for i in data_gen:
         data_list.append(str(i))
         lat_float = float(str(i).split("lat")[-1].split("_")[0])
         lon_float = float(str(i).split("lon")[-1].split(s.storage_format)[0])
-        lat_indices.append(int(180 - 2 * lat_float - 0.5))
-        lon_indices.append(int(2 * lon_float - 0.5 + 360))
-
-    # adjust indices if datasets are subsets (lat/lon-shapes are smaller than 360/720)
-    # TODO: make this more robust
-    lat_indices = np.array(np.array(lat_indices) / s.lateral_sub, dtype=int)
-    lon_indices = np.array(np.array(lon_indices) / s.lateral_sub, dtype=int)
+        lat_float_list.append(lat_float)
+        lon_float_list.append(lon_float)
 
     #  get headers and form empty netCDF file with all meatdata
     print(data_list[0])
@@ -99,32 +101,44 @@ if write_netcdf:
             for key, att in attributes.items():
                 ncvar.setncattr(key, att)
 
-
     outfile.setncattr("cfact_version", attrici.__version__)
     outfile.setncattr("runid", Path.cwd().name)
 
-    for (i, j, dfpath) in itertools.zip_longest(lat_indices, lon_indices, data_list):
+    n_written_cells = 0
+
+    for dfpath in data_list:
 
         df = pp.read_from_disk(dfpath)
+        lat = get_float_from_string(Path(dfpath).parent.name)
+        lon = get_float_from_string(Path(dfpath).stem.split("lon")[-1])
+
+        lat_idx = pp.rescale_aoi(outfile.variables["lat"][:], lat)
+        lon_idx = pp.rescale_aoi(outfile.variables["lon"][:], lon)
+
         for var in s.report_to_netcdf:
             ts = df[vardict[var]]
-            outfile.variables[var][:, i, j] = np.array(ts)
-        print("wrote data from", dfpath, "to", i, j)
+            outfile.variables[var][:, lat_idx, lon_idx] = np.array(ts)
+        n_written_cells = n_written_cells + 1
 
     outfile.close()
 
-    print("Successfully wrote", cfact_file, "file. Took")
+    print(
+        f"Successfully wrote data from {n_written_cells} cells ",
+        f"to the {cfact_file} file.",
+    )
     print(
         "Writing took {0:.1f} minutes.".format(
             (datetime.now() - TIME0).total_seconds() / 60
         )
-)
+    )
 
 if rechunk:
     cfact_rechunked = pp.rechunk_netcdf(cfact_file, cfact_rechunked)
 
 if replace_invalid:
-    cfact_rechunked = pp.replace_nan_inf_with_orig(s.variable, source_file, cfact_rechunked)
+    cfact_rechunked = pp.replace_nan_inf_with_orig(
+        s.variable, source_file, cfact_rechunked
+    )
 
 
 if cdo_processing:
