@@ -24,10 +24,16 @@ import settings as s
 
 ## NOTE run single unittest in cell of jupyter nb: unittest.main(argv=[''], verbosity=2, exit=False)
 
-## overwrite filepaths from settings
-s.data_dir = Path("./test_data/")
-s.input_dir = Path(f"{s.data_dir}/demo_input/")
-s.output_dir = Path(f"{s.data_dir}/demo_output/")
+
+## overwrite filepaths from settings (in case no test data is used for processing)
+s.data_dir = "./tests/test_data/demo_input"
+s.input_dir = Path(s.data_dir) / s.dataset / s.tile
+s.output_dir = Path("./tests/test_data/demo_output")
+
+# TODO fix imitate input files isntead of using test input data
+ts_dir = Path(f"./{s.output_dir}/{s.tile}/timeseries/{s.variable}")
+trace_dir = Path(f"./{s.output_dir}/{s.tile}/traces/{s.variable}")
+lsm_file = Path(s.input_dir) / f"landmask_{s.tile}_demo.nc"
 
 
 class TestEstimator(unittest.TestCase):
@@ -36,9 +42,7 @@ class TestEstimator(unittest.TestCase):
     """
     def setUp(self):
 
-
-
-        ## create test input data
+       ## create test input data
         self.df = pd.DataFrame(
          [[ datetime.strptime("1950-01-01 18:00:00", "%Y-%m-%d %H:%M:%S"), 0.000000, np.nan, np.nan, 286.589599, 0.012038], 
             [ datetime.strptime("1950-01-02 18:00:00", "%Y-%m-%d %H:%M:%S"), 0.000039, np.nan, np.nan, 286.589604, 0.012042], 
@@ -87,23 +91,19 @@ class TestOutputRunEstimation(unittest.TestCase):
         self.tile = s.tile
         self.variable_hour = s.hour
         self.variable = s.variable
-        # TODO fix imitate input files isntead of using test input data
-        self.ts_dir = Path(f"./test_data/demo_output/{self.tile}/timeseries/{self.variable}")
-        self.trace_dir = Path(f"./test_data/demo_output/{self.tile}/traces/{self.variable}")
-        self.lsm_file = Path(f"./test_data/demo_input/ERA5/{self.tile}") / f"landmask_{self.tile}_demo.nc"
-
+  
 
     def test_number_files_equals_number_landcells(self):
         """
         test if enough land-cells were processed by comparing number of files with number of land cells
         """
-        lsm = xr.load_dataset(self.lsm_file)
+        lsm = xr.load_dataset(lsm_file)
         nbr_landcells = lsm["area_European_01min"].count().values.tolist()
         print(f"Tile: {self.tile}, Variable: {self.variable, self.variable_hour}: {nbr_landcells} Land cells in lsm")
 
-        print("Searching in", self.ts_dir)
+        print("Searching in", ts_dir)
         # nbr_files = e.count_files_in_directory(self.trace_dir, ".*")
-        nbr_files = e.count_files_in_directory(self.ts_dir, "h5")
+        nbr_files = e.count_files_in_directory(ts_dir, "h5")
 
         self.assertEqual(
             nbr_files,
@@ -117,11 +117,11 @@ class TestOutputRunEstimation(unittest.TestCase):
         test if empty temporary files were created
         """
         ## ckeck for empty trace files
-        trace_files = self.ts_dir.rglob("lon*")
+        trace_files = ts_dir.rglob("lon*")
 
         self.assertTrue(
             all([os.stat(file).st_size != 0  for file in trace_files]),
-            f"empty file(s) exist in {self.ts_dir}"
+            f"empty file(s) exist in {ts_dir}"
         )
     
 
@@ -131,7 +131,7 @@ class TestOutputRunEstimation(unittest.TestCase):
         test if processing of cells failed
         """
         ## check amount of failing cells
-        failing_cells = self.ts_dir.parent.parent / "./failing_cells.log"
+        failing_cells = ts_dir.parent.parent / "./failing_cells.log"
         # print(failing_cells)
         with open(failing_cells, "r") as f:
              nbr_failcells = sum(1 for _ in f)
